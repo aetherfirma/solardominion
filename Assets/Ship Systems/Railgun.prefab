@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &100100000
+Prefab:
+  m_ObjectHideFlags: 1
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 1452130367650826}
+  m_IsPrefabParent: 1
+--- !u!1 &1452130367650826
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 4799623040398948}
+  - component: {fileID: 114960580605481350}
+  m_Layer: 0
+  m_Name: Railgun
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4799623040398948
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1452130367650826}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -26.73736, y: -21.496298, z: -34.60263}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &114960580605481350
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1452130367650826}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f5fa6fa51644166b0661b03892ee519, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Type: 1
+  SubSystems: []
+  Thrust: 2
+  Defence: 0
+  Shots: 3
+  Range: 10
+  Damage: 1
+  Orders: 
+  Model: {fileID: 100002, guid: 6508561f83f0dbd41a5f870a93d984a6, type: 3}
+  Displayed: 1
+  CardImages:
+  - {fileID: 2800000, guid: 48093fba35cc1764dba92aa2f0680428, type: 3}
+  - {fileID: 2800000, guid: 0e0fe37d938bbe04a9268faae4d9492f, type: 3}
+  Icon: {fileID: 2800000, guid: 65db004932dc0cb408fcc4bfcffb35a2, type: 3}
+  Cost: 3500000022000000140000000a00000003000000
