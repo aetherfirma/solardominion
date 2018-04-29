@@ -5,8 +5,10 @@ using Logic.Display;
 using Logic.Gameplay.Players;
 using Logic.Gameplay.Ships;
 using Logic.Maths;
+using Logic.Network;
 using Logic.Ui;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 namespace Logic.Gameplay.Rules
@@ -33,9 +35,47 @@ namespace Logic.Gameplay.Rules
         public Button LowerButton;
         public RectTransform SelectionPanel;
         public RectTransform FlashedMessageElement;
+        public RectTransform StartScreen;
+        public string ServerUrl;
 
         private ListBuilder _listBuilder;
         private SetupHandler _setupHandler;
+        private StartScreen _startScreen;
+
+        public GameResponse CurrentGameState;
+        public float LastNetworkUpdate;
+        public float UpdateInterval = 5;
+
+        public void SetGameState(GameResponse response)
+        {
+            CurrentGameState = response;
+            LastNetworkUpdate = Time.time;
+        }
+
+        public GameResponse UpdateGameState()
+        {
+            if (Time.time - LastNetworkUpdate > UpdateInterval)
+            {
+                var www = UnityWebRequest.Get(ServerUrl + "/game/" + GameUuid);
+                www.SendWebRequest();
+
+                while (!www.isDone) ;
+
+                if (www.isNetworkError)
+                {
+                    FlashMessage("There was a network error\n" + www.error);
+                }
+                else if (www.isHttpError)
+                {
+                    FlashMessage("There was a server error (" + www.responseCode + ")\n" + www.error);
+                }
+                else
+                {
+                    SetGameState(GameResponse.FromJson(www.downloadHandler.text));
+                }
+            }
+            return CurrentGameState;
+        }
 
         private Queue<FlashedMessage> _flashedMessages = new Queue<FlashedMessage>();
 
@@ -50,18 +90,22 @@ namespace Logic.Gameplay.Rules
             Rng = new WellRng(Seed);
         }
 
+        public string GameUuid, PlayerUuid;
+        public Scenario Scenario;
+
         private void Start()
         {
             CameraOperator = new CameraOperator(Camera.transform.parent);
             PlaySurface = new Plane(Vector3.up, Vector3.zero);
+            Scenario = Scenario.Confrontation;
 
+            _startScreen = new StartScreen(this);
             _listBuilder = new ListBuilder(this);
             _setupHandler = new SetupHandler(this);
 
             Players = new[]
             {
-                new Player(Faction.UNM, PlayerType.Local),
-                new Player(Faction.IP3, PlayerType.Computer)
+                new Player(PlayerType.Local)
             };
             FindUiElements();
         }
@@ -115,8 +159,13 @@ namespace Logic.Gameplay.Rules
 
             switch (Phase)
             {
+                case GamePhase.GameCreation:
+                    _startScreen.Update();
+                    break;
                 case GamePhase.PlayerSelection:
-                    Phase = GamePhase.ListBuilding;
+                    _upperDisplayText.text = "Waiting on other players";
+                    var state = UpdateGameState();
+                    if (state.players.Length == state.no_players) Phase = GamePhase.ListBuilding;
                     break;
                 case GamePhase.ListBuilding:
                     _listBuilder.Update();

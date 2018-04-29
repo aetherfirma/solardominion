@@ -2,6 +2,7 @@
 {
     public enum GamePhase
     {
+        GameCreation,
         PlayerSelection,
         ListBuilding,
         Setup,

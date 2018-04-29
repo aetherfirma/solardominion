@@ -5,13 +5,13 @@ namespace Logic.Gameplay.Players
 {
     public class Player
     {
-        public Faction Faction;
+        public Faction? Faction;
         public PlayerType Type;
         public Ship[] Fleet;
 
-        public Player(Faction faction, PlayerType type)
+        public Player(PlayerType type)
         {
-            Faction = faction;
+            Faction = null;
             Type = type;
             Fleet = new Ship[0];
         }
