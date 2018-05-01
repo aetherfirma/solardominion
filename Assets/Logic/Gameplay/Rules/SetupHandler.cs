@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Logic.Gameplay.Ships;
+using Logic.Network;
+using Logic.Utilities;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Logic.Gameplay.Rules
 {
@@ -20,11 +23,71 @@ namespace Logic.Gameplay.Rules
         {
             if (!_setup) Setup();
 
-            _referee.DisplayUpperText(string.Format("{0:} Turn To Deploy", _referee.Players[_referee.CurrentPlayer].Faction));
+            var state = _referee.UpdateGameState();
 
-            if (_selection == null) Selection();
-            else if (!_headingSet) SetPosition();
-            else SetHeading();
+            if (_referee.CurrentPlayer == _referee.LocalPlayer)
+            {
+                _referee.DisplayUpperText(string.Format("{0:} Turn To Deploy",
+                    _referee.Players[_referee.CurrentPlayer].Faction));
+
+                if (_selection == null) Selection();
+                else if (!_headingSet) SetPosition();
+                else SetHeading();
+            }
+            else
+            {
+                _referee.DisplayUpperText(string.Format("Waiting for {0:} to deploy",
+                    _referee.Players[_referee.CurrentPlayer].Faction));
+
+                if (_referee.LastObservedInstruction < state.turns.Count)
+                {
+                    for (int i = _referee.LastObservedInstruction; i < state.turns.Count; i++)
+                    {
+                        var turn = state.turns[i];
+                        var ship = _referee.Players[_referee.CurrentPlayer].Fleet.Single(s => s.ShipUuid == turn.ship);
+                        ship.transform.position = new Vector3(turn.location[0], 0, turn.location[1]);
+                        ship.Speed = turn.speed;
+                        ship.transform.rotation = Quaternion.Euler(0, turn.rotation, 0);
+                        ship.Deployed = true;
+                        _referee.LastObservedInstruction = i;
+                        if (!FindNextSetupPlayer()) _referee.Phase = GamePhase.Play;
+                    }
+                }
+            }
+        }
+
+        private void BroadcastDeployment(Ship ship)
+        {
+            var turn = new Turn
+            {
+                action = TurnType.Deploy,
+                ship = ship.ShipUuid,
+                location = new[] {ship.transform.position.x, ship.transform.position.z},
+                rotation = ship.transform.rotation.eulerAngles.y,
+                speed = ship.Speed
+            };
+
+            var wwwForm = new WWWForm();
+            wwwForm.AddField("player", _referee.PlayerUuid);
+            wwwForm.AddField("turn", StringSerializationAPI.Serialize<Turn>(turn));
+            var www = UnityWebRequest.Post(_referee.ServerUrl + "/game/" + _referee.GameUuid + "/turn", wwwForm);
+            www.SendWebRequest();
+
+            while (!www.isDone) ;
+ 
+            if(www.isNetworkError) {
+                _referee.FlashMessage("There was a network error creating a game\n"+www.error);
+            } 
+            else if (www.isHttpError)
+            {
+                _referee.FlashMessage("There was a server error (" + www.responseCode +  ") creating a game\n"+www.error);
+            }
+            else
+            {
+                var response = GameResponse.FromJson(www.downloadHandler.text);
+                _referee.LastObservedInstruction = response.turns.Count;
+                _referee.SetGameState(response);
+            }
         }
 
         private void SetHeading()
@@ -43,6 +106,7 @@ namespace Logic.Gameplay.Rules
                     _headingSet = false;
                     _selection.Speed = Mathf.CeilToInt(delta.magnitude / 5);
                     _selection.Deployed = true;
+                    BroadcastDeployment(_selection);
                     _selection = null;
 
                     if (!FindNextSetupPlayer()) _referee.Phase = GamePhase.Play;
@@ -85,7 +149,7 @@ namespace Logic.Gameplay.Rules
                 if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo, 200))
                 {
                     var ship = hitInfo.collider.gameObject.GetComponentInChildren<Ship>();
-                    if (ship != null && !ship.Deployed) _selection = ship;
+                    if (ship != null && !ship.Deployed && ship.Player.Uuid == _referee.PlayerUuid) _selection = ship;
                 }
             }
         }

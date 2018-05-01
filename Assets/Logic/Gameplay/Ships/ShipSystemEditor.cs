@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿#if UNITY_EDITOR
+using UnityEditor;
 
 namespace Logic.Gameplay.Ships
 {
@@ -69,3 +70,4 @@ namespace Logic.Gameplay.Ships
         }
     }
 }
+#endif

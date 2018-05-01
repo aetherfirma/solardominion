@@ -1,13 +1,17 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using Logic.Gameplay.Players;
 using Logic.Utilities;
 using UnityEngine;
 
 namespace Logic.Gameplay.Ships
 {
     public class Ship : MonoBehaviour
-    {
+    {   
         public ShipSystem[] Systems;
         public string UUID;
+        public Player Player;
+        public string ShipUuid;
         public bool[] Damage;
         public int Speed;
         public int Training;
@@ -41,6 +45,22 @@ namespace Logic.Gameplay.Ships
                 }
                 
             }
+        }
+
+        public Ship Initialise(int training, Player player = null, string uuid = null)
+        {
+            var newShip = Instantiate(this);
+            newShip.name = name;
+            newShip.gameObject.active = false;
+            newShip.Training = training;
+            newShip.ShipUuid = uuid ?? Guid.NewGuid().ToString();
+            newShip.Player = player;
+            return newShip;
+        }
+
+        public ShipJson ToSerializable()
+        {
+            return new ShipJson(UUID, Training, ShipUuid);
         }
     }
 }

@@ -5,6 +5,7 @@
         GameCreation,
         PlayerSelection,
         ListBuilding,
+        Waiting,
         Setup,
         Play
     }

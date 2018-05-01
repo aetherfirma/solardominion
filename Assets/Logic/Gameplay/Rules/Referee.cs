@@ -20,7 +20,7 @@ namespace Logic.Gameplay.Rules
         public ShipArray[] Ships;
         public Player[] Players;
         public GamePhase Phase;
-        public int CurrentPlayer;
+        public int CurrentPlayer, LocalPlayer;
         public int PlayArea = 120;
         public string Seed;
         public WellRng Rng;
@@ -36,6 +36,7 @@ namespace Logic.Gameplay.Rules
         public RectTransform SelectionPanel;
         public RectTransform FlashedMessageElement;
         public RectTransform StartScreen;
+        public RectTransform FactionSelection;
         public string ServerUrl;
 
         private ListBuilder _listBuilder;
@@ -46,15 +47,17 @@ namespace Logic.Gameplay.Rules
         public float LastNetworkUpdate;
         public float UpdateInterval = 5;
 
+        public int LastObservedInstruction;
+
         public void SetGameState(GameResponse response)
         {
             CurrentGameState = response;
             LastNetworkUpdate = Time.time;
         }
 
-        public GameResponse UpdateGameState()
+        public GameResponse UpdateGameState(bool force = false)
         {
-            if (Time.time - LastNetworkUpdate > UpdateInterval)
+            if (force || Time.time - LastNetworkUpdate > UpdateInterval)
             {
                 var www = UnityWebRequest.Get(ServerUrl + "/game/" + GameUuid);
                 www.SendWebRequest();
@@ -103,10 +106,6 @@ namespace Logic.Gameplay.Rules
             _listBuilder = new ListBuilder(this);
             _setupHandler = new SetupHandler(this);
 
-            Players = new[]
-            {
-                new Player(PlayerType.Local)
-            };
             FindUiElements();
         }
 //
@@ -150,6 +149,21 @@ namespace Logic.Gameplay.Rules
             _flashedMessages.Enqueue(m);
         }
 
+        private Player[] CreatePlayers()
+        {
+            var players = new Player[CurrentGameState.no_players];
+            
+            for (var i = 0; i < players.Length; i++)
+            {
+                var uuid = CurrentGameState.players[i];
+                players[i] = new Player(uuid, uuid == PlayerUuid ? PlayerType.Local : PlayerType.Network);
+                if (CurrentGameState.rosters.ContainsKey(uuid)) players[i].UpdateFleet(CurrentGameState.rosters[uuid], Ships[(int)CurrentGameState.rosters[uuid].Faction].Ships);
+                if (uuid == PlayerUuid) LocalPlayer = i;
+            }
+
+            return players;
+        }
+
         private void Update()
         {
             HandleCameraMovement();
@@ -157,6 +171,7 @@ namespace Logic.Gameplay.Rules
 
             UpdateFlashedMessages();
 
+            GameResponse state;
             switch (Phase)
             {
                 case GamePhase.GameCreation:
@@ -164,11 +179,24 @@ namespace Logic.Gameplay.Rules
                     break;
                 case GamePhase.PlayerSelection:
                     _upperDisplayText.text = "Waiting on other players";
-                    var state = UpdateGameState();
-                    if (state.players.Length == state.no_players) Phase = GamePhase.ListBuilding;
+                    state = UpdateGameState();
+                    if (state.players.Length == state.no_players)
+                    {
+                        Players = CreatePlayers();
+                        Phase = GamePhase.ListBuilding;
+                    }
                     break;
                 case GamePhase.ListBuilding:
                     _listBuilder.Update();
+                    break;
+                case GamePhase.Waiting:
+                    _upperDisplayText.text = "Waiting on other players";
+                    UpdateGameState();
+                    Players = CreatePlayers();
+                    if (Players.All(player => player.Faction != null))
+                    {
+                        Phase = GamePhase.Setup;
+                    }
                     break;
                 case GamePhase.Setup:
                     _setupHandler.Update();

@@ -1,5 +1,5 @@
 ﻿using System;
-using UnityEngine;
+using Logic.Utilities;
 
 namespace Logic.Network
 {
@@ -11,7 +11,7 @@ namespace Logic.Network
         
         public static JoinResponse FromJson(string json)
         {
-            return JsonUtility.FromJson<JoinResponse>(json);
+            return StringSerializationAPI.Deserialize<JoinResponse>(json);
         }
 
     }

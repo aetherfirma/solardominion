@@ -1,5 +1,7 @@
 ﻿using System;
-using UnityEngine;
+using System.Collections.Generic;
+using Logic.Gameplay.Players;
+using Logic.Utilities;
 
 namespace Logic.Network
 {
@@ -10,10 +12,31 @@ namespace Logic.Network
         public int no_players;
         public string[] players;
         public float started, modified;
+        public Dictionary<string, FleetJson> rosters;
+        public List<Turn> turns;
 
         public static GameResponse FromJson(string json)
         {
-            return JsonUtility.FromJson<GameResponse>(json);
+            return StringSerializationAPI.Deserialize<GameResponse>(json);
         }
+    }
+
+    [Serializable]
+    public class Turn
+    {
+        public string player;
+        public TurnType action;
+        public string ship;
+        public string target;
+        public float[] location;
+        public float rotation;
+        public int speed;
+    }
+
+    public enum TurnType
+    {
+        Deploy,
+        Move,
+        Act
     }
 }
