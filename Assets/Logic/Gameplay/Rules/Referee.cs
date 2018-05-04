@@ -59,23 +59,12 @@ namespace Logic.Gameplay.Rules
         {
             if (force || Time.time - LastNetworkUpdate > UpdateInterval)
             {
-                var www = UnityWebRequest.Get(ServerUrl + "/game/" + GameUuid);
-                www.SendWebRequest();
-
-                while (!www.isDone) ;
-
-                if (www.isNetworkError)
-                {
-                    FlashMessage("There was a network error\n" + www.error);
-                }
-                else if (www.isHttpError)
-                {
-                    FlashMessage("There was a server error (" + www.responseCode + ")\n" + www.error);
-                }
-                else
-                {
-                    SetGameState(GameResponse.FromJson(www.downloadHandler.text));
-                }
+                SimpleRequest.Get(
+                    ServerUrl + "/game/" + GameUuid, 
+                    www => SetGameState(GameResponse.FromJson(www.downloadHandler.text)),
+                    www => FlashMessage("There was a server error (" + www.responseCode + ")\n" + www.error),
+                    www => FlashMessage("There was a network error\n" + www.error)
+                );
             }
             return CurrentGameState;
         }

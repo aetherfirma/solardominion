@@ -60,28 +60,21 @@ namespace Logic.Gameplay.Rules
                 finishListButton.onClick.AddListener(delegate
                 {
                     ClearItems();
-                    
+
                     var wwwForm = new WWWForm();
                     wwwForm.AddField("player", _referee.PlayerUuid);
                     wwwForm.AddField("roster", _referee.Players[_referee.LocalPlayer].FleetJson());
-                    var www = UnityWebRequest.Post(_referee.ServerUrl + "/game/" + _referee.GameUuid + "/roster", wwwForm);
-                    www.SendWebRequest();
 
-                    while (!www.isDone) ;
- 
-                    if(www.isNetworkError) {
-                        _referee.FlashMessage("There was a network error creating a game\n"+www.error);
-                    } 
-                    else if (www.isHttpError)
-                    {
-                        _referee.FlashMessage("There was a server error (" + www.responseCode +  ") creating a game\n"+www.error);
-                    }
-                    else
-                    {
-                        var response = GameResponse.FromJson(www.downloadHandler.text);
-                        _referee.SetGameState(response);
-                        _referee.Phase = GamePhase.Waiting;
-                    }
+                    SimpleRequest.Post(
+                        _referee.ServerUrl + "/game/" + _referee.GameUuid + "/roster", wwwForm,
+                        www =>
+                        {
+                            _referee.SetGameState(GameResponse.FromJson(www.downloadHandler.text));
+                            _referee.Phase = GamePhase.Waiting;
+                        },
+                        www => _referee.FlashMessage("There was a server error (" + www.responseCode +  ") creating a game\n"+www.error),
+                        www => _referee.FlashMessage("There was a network error creating a game\n"+www.error)
+                    );
                 });
 
                 var factionShips = _referee.Ships[(int) _referee.Players[_referee.LocalPlayer].Faction].Ships;

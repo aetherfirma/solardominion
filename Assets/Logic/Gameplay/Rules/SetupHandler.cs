@@ -70,24 +70,18 @@ namespace Logic.Gameplay.Rules
             var wwwForm = new WWWForm();
             wwwForm.AddField("player", _referee.PlayerUuid);
             wwwForm.AddField("turn", StringSerializationAPI.Serialize<Turn>(turn));
-            var www = UnityWebRequest.Post(_referee.ServerUrl + "/game/" + _referee.GameUuid + "/turn", wwwForm);
-            www.SendWebRequest();
 
-            while (!www.isDone) ;
- 
-            if(www.isNetworkError) {
-                _referee.FlashMessage("There was a network error creating a game\n"+www.error);
-            } 
-            else if (www.isHttpError)
-            {
-                _referee.FlashMessage("There was a server error (" + www.responseCode +  ") creating a game\n"+www.error);
-            }
-            else
-            {
-                var response = GameResponse.FromJson(www.downloadHandler.text);
-                _referee.LastObservedInstruction = response.turns.Count;
-                _referee.SetGameState(response);
-            }
+            SimpleRequest.Post(
+                _referee.ServerUrl + "/game/" + _referee.GameUuid + "/turn", wwwForm,
+                www =>
+                {
+                    var response = GameResponse.FromJson(www.downloadHandler.text);
+                    _referee.LastObservedInstruction = response.turns.Count;
+                    _referee.SetGameState(response);
+                },
+                www => _referee.FlashMessage("There was a server error (" + www.responseCode +  ") creating a game\n"+www.error),
+                www => _referee.FlashMessage("There was a network error creating a game\n"+www.error)
+            );
         }
 
         private void SetHeading()

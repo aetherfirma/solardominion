@@ -68,31 +68,23 @@ namespace Logic.Gameplay.Rules
 
         private void JoinGame()
         {
-            var wwwForm = new WWWForm();
-            var www = UnityWebRequest.Post(_referee.ServerUrl + "/game/" + _field.text + "/join", wwwForm);
+            SimpleRequest.Post(
+                _referee.ServerUrl + "/game/" + _field.text + "/join", new WWWForm(),
+                www =>
+                {
+                    var response = JoinResponse.FromJson(www.downloadHandler.text);
+                    _referee.SetGameState(response.game);
+                    _referee.GameUuid = response.game.id;
+                    _referee.PlayerUuid = response.player_id;
+                    _referee.FlashMessage("You have joined game " + _referee.GameUuid);
+                    _referee.Phase = GamePhase.PlayerSelection;
+                    _referee.Rng = new WellRng(response.game.seed);
+                    Destroy();
+                },
+                www => _referee.FlashMessage("There was a server error (" + www.responseCode +  ") creating a game\n"+www.error),
+                www => _referee.FlashMessage("There was a network error creating a game\n"+www.error)
+            );
             _field.text = "";
-            www.SendWebRequest();
-
-            while (!www.isDone) ;
- 
-            if(www.isNetworkError) {
-                _referee.FlashMessage("There was a network error joining a game\n"+www.error);
-            } 
-            else if (www.isHttpError)
-            {
-                _referee.FlashMessage("There was a server error (" + www.responseCode +  ") joining a game\n"+www.error);
-            }
-            else
-            {
-                var response = JoinResponse.FromJson(www.downloadHandler.text);
-                _referee.SetGameState(response.game);
-                _referee.GameUuid = response.game.id;
-                _referee.PlayerUuid = response.player_id;
-                _referee.FlashMessage("You have joined game " + _referee.GameUuid);
-                _referee.Phase = GamePhase.PlayerSelection;
-                _referee.Rng = new WellRng(response.game.seed);
-                Destroy();
-            }
         }
 
         private void Destroy()
