@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Logic.Gameplay.Players;
+using Logic.Maths;
 using Logic.Utilities;
 using UnityEngine;
 
@@ -17,10 +18,21 @@ namespace Logic.Gameplay.Ships
         public int Training;
         public int Initiative;
         public bool UnderOrders;
+        public bool Fleeing, Fled;
         public Orders Order;
         public bool Deployed;
         [Range(2,6)] public int MinimumTraining;
         [Range(2,6)] public int MaximumTraining;
+
+        public bool Alive
+        {
+            get { return !(Fled || Damage.All(d => d)); }
+        }
+
+        public void SetInitiative(WellRng rng)
+        {
+            Initiative = Training + rng.D6();
+        }
 
         public int CalculateCost(int training)
         {
@@ -30,7 +42,7 @@ namespace Logic.Gameplay.Ships
         private void Start()
         {
             var hardpoints = gameObject.FindChildrenWithName("Hardpoint");
-            int systemSearch = 0;
+            var systemSearch = 0;
             foreach (var hardpoint in hardpoints)
             {
                 while (systemSearch < Systems.Length && !Systems[systemSearch].Displayed)
@@ -47,6 +59,11 @@ namespace Logic.Gameplay.Ships
             }
         }
 
+        private void SetupDamageArray()
+        {
+            Damage = new bool[Systems.Length];
+        }
+
         public Ship Initialise(int training, Player player = null, string uuid = null)
         {
             var newShip = Instantiate(this);
@@ -55,6 +72,7 @@ namespace Logic.Gameplay.Ships
             newShip.Training = training;
             newShip.ShipUuid = uuid ?? Guid.NewGuid().ToString();
             newShip.Player = player;
+            newShip.SetupDamageArray();
             return newShip;
         }
 

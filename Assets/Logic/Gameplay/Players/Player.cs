@@ -12,6 +12,7 @@ namespace Logic.Gameplay.Players
         public PlayerType Type;
         public Ship[] Fleet;
         public string Uuid;
+        public int Number;
 
         public Player(string uuid, PlayerType type)
         {

@@ -42,6 +42,7 @@ namespace Logic.Gameplay.Rules
         private ListBuilder _listBuilder;
         private SetupHandler _setupHandler;
         private StartScreen _startScreen;
+        private GameplayHandler _gameplayHandler;
 
         public GameResponse CurrentGameState;
         public float LastNetworkUpdate;
@@ -94,14 +95,10 @@ namespace Logic.Gameplay.Rules
             _startScreen = new StartScreen(this);
             _listBuilder = new ListBuilder(this);
             _setupHandler = new SetupHandler(this);
+            _gameplayHandler = new GameplayHandler(this);
 
             FindUiElements();
         }
-//
-//        private string Serialize()
-//        {
-//            
-//        }
 
         public void DisplayUpperText(string s)
         {
@@ -140,6 +137,17 @@ namespace Logic.Gameplay.Rules
 
         private Player[] CreatePlayers()
         {
+            if (Players != null)
+            {
+                foreach (var player in Players)
+                {
+                    foreach (var ship in player.Fleet)
+                    {
+                        Destroy(ship.gameObject);
+                    }
+                }
+            }
+
             var players = new Player[CurrentGameState.no_players];
             
             for (var i = 0; i < players.Length; i++)
@@ -148,6 +156,7 @@ namespace Logic.Gameplay.Rules
                 players[i] = new Player(uuid, uuid == PlayerUuid ? PlayerType.Local : PlayerType.Network);
                 if (CurrentGameState.rosters.ContainsKey(uuid)) players[i].UpdateFleet(CurrentGameState.rosters[uuid], Ships[(int)CurrentGameState.rosters[uuid].Faction].Ships);
                 if (uuid == PlayerUuid) LocalPlayer = i;
+                players[i].Number = i;
             }
 
             return players;
@@ -191,7 +200,7 @@ namespace Logic.Gameplay.Rules
                     _setupHandler.Update();
                     break;
                 case GamePhase.Play:
-                    _upperDisplayText.text = "PLAY THE GAME";
+                    _gameplayHandler.Update();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

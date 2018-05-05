@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Logic.Maths;
 using UnityEngine;
 
 namespace Logic.Utilities
@@ -43,6 +44,12 @@ namespace Logic.Utilities
         public static GameObject[] FindChildrenWithoutStringInName(this GameObject gameObject, string fragment)
         {
             return (from Transform transform in gameObject.transform where !transform.gameObject.name.Contains(fragment) select transform.gameObject).ToArray();
+        }
+
+        public static TSource Random<TSource>(this IEnumerable<TSource> source, WellRng rng)
+        {
+            var array = source.ToArray();
+            return array[rng.NextInt(0, array.Length - 1)];
         }
     }
 
