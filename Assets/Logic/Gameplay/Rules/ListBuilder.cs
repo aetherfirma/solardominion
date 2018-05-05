@@ -28,6 +28,7 @@ namespace Logic.Gameplay.Rules
         {
             if (!_factionSelected)
             {
+                _referee.TooltipEnabled = false;
                 if (!_factionSetup)
                 {
                     var factionSelection = Object.Instantiate(_referee.FactionSelection, _referee.UiCanvas);
@@ -60,6 +61,7 @@ namespace Logic.Gameplay.Rules
                 finishListButton.onClick.AddListener(delegate
                 {
                     ClearItems();
+                    _referee.TooltipEnabled = true;
 
                     var wwwForm = new WWWForm();
                     wwwForm.AddField("player", _referee.PlayerUuid);

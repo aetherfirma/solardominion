@@ -86,22 +86,19 @@ namespace Logic.Gameplay.Rules
 
         private void SetHeading()
         {
-            var ray = _referee.Camera.ScreenPointToRay(Input.mousePosition);
-            float enter;
-            _referee.PlaySurface.Raycast(ray, out enter);
-            var hitPoint = ray.GetPoint(enter);
-            var delta = hitPoint - _selection.transform.position;
+            var delta = _referee.MouseLocation - _selection.transform.position;
             _selection.transform.rotation = Quaternion.LookRotation(delta);
             if (Input.GetMouseButtonUp(0))
             {
-                if (Mathf.Abs(hitPoint.x) < _referee.PlayArea / 2f &&
-                    Mathf.Abs(hitPoint.z) < _referee.PlayArea / 2f)
+                if (Mathf.Abs(_referee.MouseLocation.x) < _referee.PlayArea / 2f &&
+                    Mathf.Abs(_referee.MouseLocation.z) < _referee.PlayArea / 2f)
                 {
                     _headingSet = false;
                     _selection.Speed = Mathf.CeilToInt(delta.magnitude / 5);
                     _selection.Deployed = true;
                     BroadcastDeployment(_selection);
                     _selection = null;
+                    _referee.TooltipEnabled = true;
 
                     if (!FindNextSetupPlayer()) _referee.Phase = GamePhase.Play;
                 }
@@ -111,17 +108,13 @@ namespace Logic.Gameplay.Rules
 
         private void SetPosition()
         {
-            var ray = _referee.Camera.ScreenPointToRay(Input.mousePosition);
-            float enter;
-            _referee.PlaySurface.Raycast(ray, out enter);
-            var hitPoint = ray.GetPoint(enter);
-            _selection.transform.position = hitPoint;
+            _selection.transform.position = _referee.MouseLocation;
             if (Input.GetMouseButtonUp(0))
             {
                 if (_referee.ValidShipPosition(_selection.transform.position))
                 {
-                    if (Mathf.Abs(hitPoint.x) < _referee.PlayArea / 2f &&
-                        Mathf.Abs(hitPoint.z) < _referee.PlayArea / 2f) _headingSet = true;
+                    if (Mathf.Abs(_referee.MouseLocation.x) < _referee.PlayArea / 2f &&
+                        Mathf.Abs(_referee.MouseLocation.z) < _referee.PlayArea / 2f) _headingSet = true;
                     else _referee.FlashMessage("Cannot place ship here, out of bounds", 10);
                 }
                 else _referee.FlashMessage("Cannot place ship here, too close to something else", 10);
@@ -137,13 +130,13 @@ namespace Logic.Gameplay.Rules
                 3.5f
             );
 
-            if (Input.GetMouseButtonUp(0))
+            if (Input.GetMouseButtonUp(0) && _referee.MouseSelection != null)
             {
-                RaycastHit hitInfo;
-                if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo, 200))
+                var ship = _referee.MouseSelection.GetComponentInChildren<Ship>();
+                if (ship != null && !ship.Deployed && ship.Player.Uuid == _referee.PlayerUuid)
                 {
-                    var ship = hitInfo.collider.gameObject.GetComponentInChildren<Ship>();
-                    if (ship != null && !ship.Deployed && ship.Player.Uuid == _referee.PlayerUuid) _selection = ship;
+                    _selection = ship;
+                    _referee.TooltipEnabled = false;
                 }
             }
         }

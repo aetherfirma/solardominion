@@ -595,6 +595,7 @@ MonoBehaviour:
     type: 2}
   FactionSelection: {fileID: 224681752900203300, guid: be1da53338105d348b540bc44d9440d8,
     type: 2}
+  Tooltip: {fileID: 114297979607629558, guid: f5829f0d732b11b439f0e5a8d191883c, type: 2}
   ServerUrl: https://solar-dominion.herokuapp.com
   CurrentGameState:
     id: 
@@ -606,7 +607,9 @@ MonoBehaviour:
     modified: 0
     turns: []
   LastNetworkUpdate: 0
-  UpdateInterval: 5
+  UpdateInterval: 2
+  MouseLocation: {x: 0, y: 0, z: 0}
+  MouseSelection: {fileID: 0}
   LastObservedInstruction: 0
   GameUuid: 
   PlayerUuid: 

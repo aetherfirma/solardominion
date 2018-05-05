@@ -37,6 +37,7 @@ namespace Logic.Gameplay.Rules
         public RectTransform FlashedMessageElement;
         public RectTransform StartScreen;
         public RectTransform FactionSelection;
+        public Tooltip Tooltip;
         public string ServerUrl;
 
         private ListBuilder _listBuilder;
@@ -47,6 +48,9 @@ namespace Logic.Gameplay.Rules
         public GameResponse CurrentGameState;
         public float LastNetworkUpdate;
         public float UpdateInterval = 5;
+
+        public Vector3 MouseLocation;
+        public GameObject MouseSelection;
 
         public int LastObservedInstruction;
 
@@ -61,12 +65,13 @@ namespace Logic.Gameplay.Rules
             if (force || Time.time - LastNetworkUpdate > UpdateInterval)
             {
                 SimpleRequest.Get(
-                    ServerUrl + "/game/" + GameUuid, 
+                    ServerUrl + "/game/" + GameUuid,
                     www => SetGameState(GameResponse.FromJson(www.downloadHandler.text)),
                     www => FlashMessage("There was a server error (" + www.responseCode + ")\n" + www.error),
                     www => FlashMessage("There was a network error\n" + www.error)
                 );
             }
+
             return CurrentGameState;
         }
 
@@ -98,6 +103,19 @@ namespace Logic.Gameplay.Rules
             _gameplayHandler = new GameplayHandler(this);
 
             FindUiElements();
+        }
+
+        public void UpdateMouseLocationAndSelection()
+        {
+            var ray = Camera.ScreenPointToRay(Input.mousePosition);
+            float enter;
+            PlaySurface.Raycast(ray, out enter);
+            MouseLocation = ray.GetPoint(enter);
+
+            RaycastHit hitInfo;
+            MouseSelection = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo, 200)
+                ? hitInfo.collider.gameObject
+                : null;
         }
 
         public void DisplayUpperText(string s)
@@ -149,12 +167,14 @@ namespace Logic.Gameplay.Rules
             }
 
             var players = new Player[CurrentGameState.no_players];
-            
+
             for (var i = 0; i < players.Length; i++)
             {
                 var uuid = CurrentGameState.players[i];
                 players[i] = new Player(uuid, uuid == PlayerUuid ? PlayerType.Local : PlayerType.Network);
-                if (CurrentGameState.rosters.ContainsKey(uuid)) players[i].UpdateFleet(CurrentGameState.rosters[uuid], Ships[(int)CurrentGameState.rosters[uuid].Faction].Ships);
+                if (CurrentGameState.rosters.ContainsKey(uuid))
+                    players[i].UpdateFleet(CurrentGameState.rosters[uuid],
+                        Ships[(int) CurrentGameState.rosters[uuid].Faction].Ships);
                 if (uuid == PlayerUuid) LocalPlayer = i;
                 players[i].Number = i;
             }
@@ -166,6 +186,9 @@ namespace Logic.Gameplay.Rules
         {
             HandleCameraMovement();
             CameraOperator.UpdateCamera();
+
+            UpdateMouseLocationAndSelection();
+            SetTooltip();
 
             UpdateFlashedMessages();
 
@@ -204,6 +227,24 @@ namespace Logic.Gameplay.Rules
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private Tooltip _tooltip;
+        public bool TooltipEnabled = true;
+
+        private void SetTooltip()
+        {
+            if (_tooltip != null && (!TooltipEnabled || MouseSelection == null))
+            {
+                Destroy(_tooltip.gameObject);
+                _tooltip = null;
+            }
+            else if (TooltipEnabled && _tooltip == null && MouseSelection != null)
+            {
+                var ship = MouseSelection.GetComponent<Ship>();
+                if (ship == null) return;
+                _tooltip = Tooltip.Create(UiCanvas, ship.Describe());
             }
         }
 

@@ -59,6 +59,37 @@ namespace Logic.Gameplay.Ships
             }
         }
 
+        public ShipSize Class
+        {
+            get
+            {
+                if (Systems.Length <= 2) return ShipSize.StrikeCraft;
+                if (Systems.Length <= 5) return ShipSize.Corvette;
+                if (Systems.Length <= 8) return ShipSize.Frigate;
+                if (Systems.Length <= 12) return ShipSize.Destroyer;
+                return ShipSize.Cruiser;
+            }
+        }
+
+        public string Describe()
+        {
+            var prefix = "SS";
+            switch (Player.Faction)
+            {
+                case Faction.UNM:
+                    prefix = "UNN";
+                    break;
+                case Faction.IP3:
+                    prefix = "PDV";
+                    break;
+            }
+
+            return string.Format(
+                "{0:} {1:} - {2:}\nTraining {3:}\nInitative {4:}",
+                prefix, "Ship Name Here", Class, Training, Initiative
+            );
+        }
+
         private void SetupDamageArray()
         {
             Damage = new bool[Systems.Length];
