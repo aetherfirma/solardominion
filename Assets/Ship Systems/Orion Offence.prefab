@@ -55,9 +55,15 @@ MonoBehaviour:
   SubSystems:
   - {fileID: 114874932384717118, guid: 190cf3a4c1fb7434fbe35376a66080c4, type: 2}
   - {fileID: 114318547020637492, guid: 6b541d475c80347419348f420a26bac1, type: 2}
+  ChosenSubsystem: -1
   Thrust: 2
   Defence: 2
   Shots: 6
   Range: 5
   Damage: 2
   Orders: 00000000010000000200000003000000
+  Model: {fileID: 0}
+  Displayed: 0
+  CardImages: []
+  Icon: {fileID: 2800000, guid: 65db004932dc0cb408fcc4bfcffb35a2, type: 3}
+  Cost: 

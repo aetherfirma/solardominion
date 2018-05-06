@@ -34,7 +34,6 @@ namespace Logic.Gameplay.Rules
 
         public void SetCameraPosition(Vector3 location, float direction, float zoom)
         {
-            Debug.Log(location + " " + direction + " " + zoom);
             Direction = direction;
             Location = location;
             Zoom = zoom;

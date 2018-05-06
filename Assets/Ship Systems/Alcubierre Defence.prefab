@@ -53,9 +53,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 4
   SubSystems: []
+  ChosenSubsystem: -1
   Thrust: 2
   Defence: 2
   Shots: 1
   Range: 15
   Damage: 3
   Orders: 00000000010000000200000003000000
+  Model: {fileID: 0}
+  Displayed: 0
+  CardImages: []
+  Icon: {fileID: 2800000, guid: d5d6b55d05218c940b28ab5775f41a7c, type: 3}
+  Cost: 

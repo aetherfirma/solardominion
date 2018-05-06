@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Logic.Maths;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Logic.Utilities
 {
@@ -50,6 +52,30 @@ namespace Logic.Utilities
         {
             var array = source.ToArray();
             return array[rng.NextInt(0, array.Length - 1)];
+        }
+
+        public static void DestroyAllChildren(this Transform transform)
+        {
+            foreach (Transform child in transform)
+            {
+                Object.Destroy(child.gameObject);
+            }
+        }
+
+        public static void DestroyAllChildren(this Transform transform, Func<GameObject, bool> selector)
+        {
+            foreach (Transform child in transform)
+            {
+                if (selector(child.gameObject)) Object.Destroy(child.gameObject);
+            }
+        }
+
+        public static void SetAsChild(this GameObject gameObject, Transform parent)
+        {
+            gameObject.transform.parent = parent;
+            gameObject.transform.localPosition = Vector3.zero;
+            gameObject.transform.localRotation = Quaternion.identity;
+            gameObject.transform.localScale = new Vector3(1, 1, 1);
         }
     }
 

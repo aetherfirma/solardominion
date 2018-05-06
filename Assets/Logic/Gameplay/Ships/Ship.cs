@@ -32,6 +32,11 @@ namespace Logic.Gameplay.Ships
         public void SetInitiative(WellRng rng)
         {
             Initiative = Training + rng.D6();
+
+            foreach (var system in Systems.Where(system => system.Type == SystemType.Composite))
+            {
+                system.ChosenSubsystem = -1;
+            }
         }
 
         public int CalculateCost(int training)
@@ -73,6 +78,15 @@ namespace Logic.Gameplay.Ships
 
         public string Describe()
         {
+
+            return string.Format(
+                "{0:} - {1:}\nTraining {2:} - Initative {3:}\nSpeed {4:}",
+                Name(), Class, Training, Initiative, Speed
+            );
+        }
+
+        public string Name()
+        {
             var prefix = "SS";
             switch (Player.Faction)
             {
@@ -84,10 +98,7 @@ namespace Logic.Gameplay.Ships
                     break;
             }
 
-            return string.Format(
-                "{0:} {1:} - {2:}\nTraining {3:}\nInitative {4:}",
-                prefix, "Ship Name Here", Class, Training, Initiative
-            );
+            return prefix + " Spaceship";
         }
 
         private void SetupDamageArray()

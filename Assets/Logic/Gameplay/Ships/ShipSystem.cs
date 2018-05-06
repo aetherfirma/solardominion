@@ -6,6 +6,7 @@ namespace Logic.Gameplay.Ships
     {
         public SystemType Type;
         public ShipSystem[] SubSystems;
+        public int ChosenSubsystem = -1;
         public int Thrust;
         public int Defence;
         public int Shots, Range, Damage;

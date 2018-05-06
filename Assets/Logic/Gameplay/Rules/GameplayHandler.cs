@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
+using Logic.Display;
 using Logic.Gameplay.Players;
 using Logic.Gameplay.Ships;
 using Logic.Utilities;
+using UnityEngine;
+using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace Logic.Gameplay.Rules
 {
@@ -16,6 +21,8 @@ namespace Logic.Gameplay.Rules
         private Dictionary<Player, List<Ship>> _shipsInInitiativeStep;
         private Player _initativePhaseStartingPlayer;
         private Ship _selection;
+        private List<GameObject> _arcs = new List<GameObject>();
+        private RectTransform _lowerBar;
 
         public GameplayHandler(Referee referee)
         {
@@ -42,6 +49,19 @@ namespace Logic.Gameplay.Rules
         {
             _shipsInInitiativeStep[ship.Player].Remove(ship);
             if (_shipsInInitiativeStep[ship.Player].Count == 0) _shipsInInitiativeStep.Remove(ship.Player);
+        }
+
+        private void NextPlayer()
+        {
+            var currentIndex = _currentPlayer.Number;
+            var n = 1;
+            currentIndex = (currentIndex + 1) % _referee.Players.Length;
+            while (n < _referee.Players.Length && !_shipsInInitiativeStep.ContainsKey(_referee.Players[currentIndex]))
+            {
+                currentIndex = (currentIndex + 1) % _referee.Players.Length;
+                n++;
+            }
+            _currentPlayer = _referee.Players[currentIndex];
         }
 
         private InitiativeStepOutcome SetupInitiativeStep()
@@ -115,6 +135,8 @@ namespace Logic.Gameplay.Rules
 
         public void Update()
         {
+            if (_lowerBar == null) _lowerBar = Object.Instantiate(_referee.LowerBar, _referee.UiCanvas);
+
             switch (_phase)
             {
                 case TurnPhase.Initiative:
@@ -147,6 +169,137 @@ namespace Logic.Gameplay.Rules
         }
 
         private Player _currentPlayer;
+        private Ship _commandSelection;
+
+        private void ClearArcs()
+        {
+            foreach (var arc in _arcs)
+            {
+                Object.Destroy(arc);
+            }
+
+            _arcs.Clear();
+        }
+
+        private void DrawSystemsDisplay(Ship ship)
+        {
+            _lowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
+            _lowerBar.transform.Find("Text").GetComponent<Text>().text = ship.Name();
+
+            var systemsLength = ship.Systems.Length;
+            RectTransform rectTransform;
+            Button button;
+            for (var i = 0; i < systemsLength; i++)
+            {
+                var system = ship.Systems[i];
+                var damaged = ship.Damage[i];
+
+                var icon = new GameObject("system icon", typeof(Image), typeof(Button), typeof(RectTransform));
+                icon.SetAsChild(_lowerBar);
+
+                icon.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+
+                rectTransform = icon.GetComponent<RectTransform>();
+                rectTransform.anchoredPosition = new Vector2(-55 / 2f * systemsLength + 55 * i, 0);
+
+                var image = icon.GetComponent<Image>();
+                if (system.Type == SystemType.Composite && system.ChosenSubsystem > -1)
+                {
+                    var texture2D = system.SubSystems[system.ChosenSubsystem].Icon;
+                    image.sprite = Sprite.Create(texture2D,
+                        new Rect(0, 0, texture2D.width, texture2D.height),
+                        new Vector2(texture2D.width / 2f, texture2D.height / 2f));
+                }
+                else
+                {
+                    image.sprite = Sprite.Create(system.Icon,
+                        new Rect(0, 0, system.Icon.width, system.Icon.height),
+                        new Vector2(system.Icon.width / 2f, system.Icon.height / 2f));
+                }
+
+                button = icon.GetComponent<Button>();
+
+                button.targetGraphic = image;
+                var interactable =
+                    !damaged && (system.Type == SystemType.Command || system.Type == SystemType.Composite);
+                button.interactable = interactable;
+
+                if (interactable)
+                {
+                    switch (system.Type)
+                    {
+                        case SystemType.Composite:
+                            button.onClick.AddListener(() =>
+                            {
+                                system.ChosenSubsystem = (system.ChosenSubsystem + 1) % system.SubSystems.Length;
+                                _referee.FlashMessage(string.Format("Set {0:} to {1:}", system.name,
+                                    system.SubSystems[system.ChosenSubsystem].name));
+                                var texture2D = system.SubSystems[system.ChosenSubsystem].Icon;
+                                image.sprite = Sprite.Create(texture2D,
+                                    new Rect(0, 0, texture2D.width, texture2D.height),
+                                    new Vector2(texture2D.width / 2f, texture2D.height / 2f));
+                            });
+                            break;
+                        case SystemType.Command:
+                            button.onClick.AddListener(() => { _referee.FlashMessage("Would add an order"); });
+                            break;
+                    }
+                }
+
+                image.color = interactable
+                    ? Color.white
+                    : (damaged ? new Color(0.5f, 0, 0, 0.5f) : new Color(0.5f, 0.5f, 0.5f, 0.5f));
+            }
+
+            var done = new GameObject("done button", typeof(Image), typeof(Button), typeof(RectTransform));
+            done.SetAsChild(_lowerBar);
+
+            rectTransform = done.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = new Vector2(0, -55);
+            rectTransform.sizeDelta = new Vector2(180, 35);
+
+            var iconImage = done.GetComponent<Image>();
+            iconImage.sprite = _referee.ButtonSprite;
+
+            button = done.GetComponent<Button>();
+            button.image = iconImage;
+            button.onClick.AddListener(() =>
+            {
+                if (ship.Systems.Where(system => system.Type == SystemType.Composite)
+                    .Any(system => system.ChosenSubsystem == -1))
+                {
+                    _referee.FlashMessage("All composite systems must be set to one of their options");
+                    return;
+                }
+                _lowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
+                _commandSelection = null;
+                RemoveShipFromStep(ship);
+                BroadcastShipCommandState(ship);
+                ClearArcs();
+                _lowerBar.transform.Find("Text").GetComponent<Text>().text = "";
+                
+                NextPlayer();
+            });
+
+            var textObj = new GameObject("Text", typeof(Text), typeof(RectTransform));
+            textObj.SetAsChild(done.transform);
+
+            var component = textObj.GetComponent<RectTransform>();
+            component.sizeDelta = new Vector2(180, 35);
+            component.anchoredPosition = Vector2.zero;
+
+            var text = textObj.GetComponent<Text>();
+            text.color = Color.white;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.text = "Finish Phase";
+            text.font = _referee.StandardFont;
+            text.fontSize = 14;
+        }
+
+        private void BroadcastShipCommandState(Ship ship)
+        {
+            throw new NotImplementedException();
+        }
 
         private void CommandPhase()
         {
@@ -159,11 +312,34 @@ namespace Logic.Gameplay.Rules
 
             if (_currentPlayer.Number != _referee.LocalPlayer)
             {
-                _referee.DisplayUpperText(String.Format("Waiting for {0:} to play", _currentPlayer.Faction));
+                _referee.DisplayUpperText(string.Format("Waiting for {0:} to play", _currentPlayer.Faction));
             }
             else
             {
-                _referee.DisplayUpperText("It's your turn");
+                _referee.DisplayUpperText("");
+
+                if (_commandSelection == null)
+                {
+                    if (_arcs.Count == 0)
+                    {
+                        foreach (var ship in _shipsInInitiativeStep[_currentPlayer])
+                        {
+                            _arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.white));
+                        }
+                    }
+
+                    if (Input.GetMouseButtonUp(0) && _referee.MouseSelection)
+                    {
+                        var ship = _referee.MouseSelection.GetComponent<Ship>();
+                        if (ship != null && _shipsInInitiativeStep[_currentPlayer].Contains(ship))
+                        {
+                            ClearArcs();
+                            _commandSelection = ship;
+                            _arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
+                            DrawSystemsDisplay(ship);
+                        }
+                    }
+                }
             }
         }
     }

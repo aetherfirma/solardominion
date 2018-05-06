@@ -37,6 +37,9 @@ namespace Logic.Gameplay.Rules
         public RectTransform FlashedMessageElement;
         public RectTransform StartScreen;
         public RectTransform FactionSelection;
+        public RectTransform LowerBar;
+        public Sprite ButtonSprite;
+        public Font StandardFont;
         public Tooltip Tooltip;
         public string ServerUrl;
 
