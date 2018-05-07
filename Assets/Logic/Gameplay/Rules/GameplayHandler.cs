@@ -61,6 +61,7 @@ namespace Logic.Gameplay.Rules
                 currentIndex = (currentIndex + 1) % _referee.Players.Length;
                 n++;
             }
+
             _currentPlayer = _referee.Players[currentIndex];
         }
 
@@ -204,9 +205,9 @@ namespace Logic.Gameplay.Rules
                 rectTransform.anchoredPosition = new Vector2(-55 / 2f * systemsLength + 55 * i, 0);
 
                 var image = icon.GetComponent<Image>();
-                if (system.Type == SystemType.Composite && system.ChosenSubsystem > -1)
+                if (system.Type == SystemType.Composite && ship.Subsystem[i] > -1)
                 {
-                    var texture2D = system.SubSystems[system.ChosenSubsystem].Icon;
+                    var texture2D = system.SubSystems[ship.Subsystem[i]].Icon;
                     image.sprite = Sprite.Create(texture2D,
                         new Rect(0, 0, texture2D.width, texture2D.height),
                         new Vector2(texture2D.width / 2f, texture2D.height / 2f));
@@ -225,6 +226,8 @@ namespace Logic.Gameplay.Rules
                     !damaged && (system.Type == SystemType.Command || system.Type == SystemType.Composite);
                 button.interactable = interactable;
 
+                var systemIndex = i;
+
                 if (interactable)
                 {
                     switch (system.Type)
@@ -232,10 +235,10 @@ namespace Logic.Gameplay.Rules
                         case SystemType.Composite:
                             button.onClick.AddListener(() =>
                             {
-                                system.ChosenSubsystem = (system.ChosenSubsystem + 1) % system.SubSystems.Length;
+                                ship.Subsystem[systemIndex] = (ship.Subsystem[systemIndex] + 1) % system.SubSystems.Length;
                                 _referee.FlashMessage(string.Format("Set {0:} to {1:}", system.name,
-                                    system.SubSystems[system.ChosenSubsystem].name));
-                                var texture2D = system.SubSystems[system.ChosenSubsystem].Icon;
+                                    system.SubSystems[ship.Subsystem[systemIndex]].name));
+                                var texture2D = system.SubSystems[ship.Subsystem[systemIndex]].Icon;
                                 image.sprite = Sprite.Create(texture2D,
                                     new Rect(0, 0, texture2D.width, texture2D.height),
                                     new Vector2(texture2D.width / 2f, texture2D.height / 2f));
@@ -266,19 +269,19 @@ namespace Logic.Gameplay.Rules
             button.image = iconImage;
             button.onClick.AddListener(() =>
             {
-                if (ship.Systems.Where(system => system.Type == SystemType.Composite)
-                    .Any(system => system.ChosenSubsystem == -1))
+                if (ship.Systems.Where((t, i) => t.Type == SystemType.Composite && ship.Subsystem[i] == -1).Any())
                 {
                     _referee.FlashMessage("All composite systems must be set to one of their options");
                     return;
                 }
+
                 _lowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
                 _commandSelection = null;
                 RemoveShipFromStep(ship);
                 BroadcastShipCommandState(ship);
                 ClearArcs();
                 _lowerBar.transform.Find("Text").GetComponent<Text>().text = "";
-                
+
                 NextPlayer();
             });
 
@@ -313,7 +316,7 @@ namespace Logic.Gameplay.Rules
             {
                 if (ship.Systems[i].Type == SystemType.Composite)
                 {
-                    turn.system_status[i] = ship.Systems[i].ChosenSubsystem;
+                    turn.system_status[i] = ship.Subsystem[i];
                 }
             }
 
@@ -329,8 +332,9 @@ namespace Logic.Gameplay.Rules
                     _referee.LastObservedInstruction = response.turns.Count;
                     _referee.SetGameState(response);
                 },
-                www => _referee.FlashMessage("There was a server error (" + www.responseCode +  ") creating a game\n"+www.error),
-                www => _referee.FlashMessage("There was a network error creating a game\n"+www.error)
+                www => _referee.FlashMessage("There was a server error (" + www.responseCode + ") creating a game\n" +
+                                             www.error),
+                www => _referee.FlashMessage("There was a network error creating a game\n" + www.error)
             );
         }
 
@@ -346,6 +350,7 @@ namespace Logic.Gameplay.Rules
                     _phase = TurnPhase.Movement;
                     return;
                 }
+
                 SetupInitiativeStep();
                 _currentPlayer = _initativePhaseStartingPlayer;
             }
@@ -353,7 +358,7 @@ namespace Logic.Gameplay.Rules
             if (_currentPlayer.Number != _referee.LocalPlayer)
             {
                 _referee.DisplayUpperText(string.Format("Waiting for {0:} to play", _currentPlayer.Faction));
-                
+
                 if (_referee.LastObservedInstruction < state.turns.Count)
                 {
                     for (var i = _referee.LastObservedInstruction; i < state.turns.Count; i++)
@@ -371,16 +376,16 @@ namespace Logic.Gameplay.Rules
 
                             foreach (var system in turn.system_status.Keys)
                             {
-                                ship.Systems[system].ChosenSubsystem = turn.system_status[system];
+                                ship.Subsystem[system] = turn.system_status[system];
                             }
-                        
+
                             RemoveShipFromStep(ship);
                         }
+
                         _referee.LastObservedInstruction = i + 1;
                         NextPlayer();
                     }
                 }
-
             }
             else
             {

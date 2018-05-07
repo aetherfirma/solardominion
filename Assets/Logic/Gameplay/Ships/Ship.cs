@@ -8,12 +8,13 @@ using UnityEngine;
 namespace Logic.Gameplay.Ships
 {
     public class Ship : MonoBehaviour
-    {   
+    {
         public ShipSystem[] Systems;
         public string UUID;
         public Player Player;
         public string ShipUuid;
         public bool[] Damage;
+        public int[] Subsystem;
         public int Speed;
         public int Training;
         public int Initiative;
@@ -21,8 +22,8 @@ namespace Logic.Gameplay.Ships
         public bool Fleeing, Fled;
         public Order Order;
         public bool Deployed;
-        [Range(2,6)] public int MinimumTraining;
-        [Range(2,6)] public int MaximumTraining;
+        [Range(2, 6)] public int MinimumTraining;
+        [Range(2, 6)] public int MaximumTraining;
 
         public bool Alive
         {
@@ -32,11 +33,7 @@ namespace Logic.Gameplay.Ships
         public void SetInitiative(WellRng rng)
         {
             Initiative = Training + rng.D6();
-
-            foreach (var system in Systems.Where(system => system.Type == SystemType.Composite))
-            {
-                system.ChosenSubsystem = -1;
-            }
+            for (var i = 0; i < Systems.Length; i++) Subsystem[i] = -1;
         }
 
         public int CalculateCost(int training)
@@ -60,7 +57,6 @@ namespace Logic.Gameplay.Ships
                     Instantiate(Systems[systemSearch].Model, hardpoint.transform);
                     systemSearch++;
                 }
-                
             }
         }
 
@@ -78,7 +74,6 @@ namespace Logic.Gameplay.Ships
 
         public string Describe()
         {
-
             return string.Format(
                 "{0:} - {1:}\nTraining {2:} - Initative {3:}\nSpeed {4:}",
                 Name(), Class, Training, Initiative, Speed
@@ -101,9 +96,11 @@ namespace Logic.Gameplay.Ships
             return prefix + " Spaceship";
         }
 
-        private void SetupDamageArray()
+        private void SetupStatusArrays()
         {
             Damage = new bool[Systems.Length];
+            Subsystem = new int[Systems.Length];
+            for (var i = 0; i < Systems.Length; i++) Subsystem[i] = -1;
         }
 
         public Ship Initialise(int training, Player player = null, string uuid = null)
@@ -114,7 +111,7 @@ namespace Logic.Gameplay.Ships
             newShip.Training = training;
             newShip.ShipUuid = uuid ?? Guid.NewGuid().ToString();
             newShip.Player = player;
-            newShip.SetupDamageArray();
+            newShip.SetupStatusArrays();
             return newShip;
         }
 
