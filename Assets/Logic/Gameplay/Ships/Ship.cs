@@ -22,12 +22,40 @@ namespace Logic.Gameplay.Ships
         public bool Fleeing, Fled;
         public Order Order;
         public bool Deployed;
+        public int ThrustRemaining;
         [Range(2, 6)] public int MinimumTraining;
         [Range(2, 6)] public int MaximumTraining;
 
         public bool Alive
         {
             get { return !(Fled || Damage.All(d => d)); }
+        }
+
+        public void CalculateThrust()
+        {
+            ThrustRemaining = Systems
+                .Select((system, index) => system.Type == SystemType.Composite ? system.SubSystems[Subsystem[index]] : system)
+                .Where(system => system.Type == SystemType.Engine)
+                .Sum(system => system.Thrust);
+        }
+
+        public float DistancePerThrust()
+        {
+            switch (Class)
+            {
+                case ShipSize.StrikeCraft:
+                    return 20;
+                case ShipSize.Corvette:
+                    return 15;
+                case ShipSize.Frigate:
+                    return 10;
+                case ShipSize.Destroyer:
+                    return 5;
+                case ShipSize.Cruiser:
+                    return 2.5f;
+                default:
+                    return 0;
+            }
         }
 
         public void SetInitiative(WellRng rng)
@@ -75,8 +103,8 @@ namespace Logic.Gameplay.Ships
         public string Describe()
         {
             return string.Format(
-                "{0:} - {1:}\nTraining {2:} - Initative {3:}\nSpeed {4:}",
-                Name(), Class, Training, Initiative, Speed
+                "{0:} - {1:}\nTraining {2:} - Initative {3:}\nSpeed {4:} - {5:} Thrust remaining",
+                Name(), Class, Training, Initiative, Speed, ThrustRemaining
             );
         }
 

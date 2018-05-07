@@ -39,7 +39,7 @@ namespace Logic.Network
     public enum TurnType
     {
         Deploy,
-        Move,
+        MovementPhase,
         Act,
         CommandPhase
     }
