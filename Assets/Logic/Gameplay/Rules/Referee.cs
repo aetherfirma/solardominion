@@ -40,7 +40,7 @@ namespace Logic.Gameplay.Rules
         public RectTransform LowerBar;
         public Sprite ButtonSprite;
         public Font StandardFont;
-        public Tooltip Tooltip;
+        public MessageTooltip Tooltip;
         public string ServerUrl;
 
         private ListBuilder _listBuilder;

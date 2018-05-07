@@ -5,6 +5,7 @@ using Logic.Display;
 using Logic.Gameplay.Players;
 using Logic.Gameplay.Ships;
 using Logic.Network;
+using Logic.Ui;
 using Logic.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
@@ -227,6 +228,9 @@ namespace Logic.Gameplay.Rules
                     !damaged && (system.Type == SystemType.Command || system.Type == SystemType.Composite);
                 button.interactable = interactable;
 
+                var card = button.gameObject.AddComponent<CardTooltip>();
+                card.Image = system.CardImages[(int) ship.Player.Faction];
+                card.ParentTransform = _referee.UiCanvas;
 
                 if (interactable)
                 {
