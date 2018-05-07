@@ -111,15 +111,19 @@ namespace Logic.Gameplay.Ships
         public string Name()
         {
             var prefix = "SS";
-            switch (Player.Faction)
+            try
             {
-                case Faction.UNM:
-                    prefix = "UNN";
-                    break;
-                case Faction.IP3:
-                    prefix = "PDV";
-                    break;
+                switch (Player.Faction)
+                {
+                    case Faction.UNM:
+                        prefix = "UNN";
+                        break;
+                    case Faction.IP3:
+                        prefix = "PDV";
+                        break;
+                }
             }
+            catch (NullReferenceException) {}
 
             return prefix + " Spaceship";
         }

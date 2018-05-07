@@ -19,7 +19,13 @@ namespace Logic.Ui
         private void Update()
         {
             _rectTransform.sizeDelta = new Vector2(200, _text.preferredHeight + 20);
-            _rectTransform.anchoredPosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+            var inputX = Input.mousePosition.x + 220 < Screen.width
+                ? Input.mousePosition.x
+                : Input.mousePosition.x - 200;
+            var inputY = Input.mousePosition.y + _rectTransform.sizeDelta.y + 20 < Screen.height
+                ? Input.mousePosition.y
+                : Input.mousePosition.y - _rectTransform.sizeDelta.y - 20;
+            _rectTransform.anchoredPosition = new Vector2(inputX, inputY);
         }
 
         public Tooltip Create(Transform parent, string message)
