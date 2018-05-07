@@ -596,6 +596,8 @@ MonoBehaviour:
   FactionSelection: {fileID: 224681752900203300, guid: be1da53338105d348b540bc44d9440d8,
     type: 2}
   LowerBar: {fileID: 224473733009599050, guid: 8f708a39d146b7e41a5b464265ac8ace, type: 2}
+  ButtonSprite: {fileID: 21300000, guid: 5f950a0a67b6a9247b6dab23e579898e, type: 3}
+  StandardFont: {fileID: 12800000, guid: a54212e00584c644a81a59318083efa3, type: 3}
   Tooltip: {fileID: 114297979607629558, guid: f5829f0d732b11b439f0e5a8d191883c, type: 2}
   ServerUrl: https://solar-dominion.herokuapp.com
   CurrentGameState:

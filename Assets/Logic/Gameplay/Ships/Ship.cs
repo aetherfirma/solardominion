@@ -19,7 +19,7 @@ namespace Logic.Gameplay.Ships
         public int Initiative;
         public bool UnderOrders;
         public bool Fleeing, Fled;
-        public Orders Order;
+        public Order Order;
         public bool Deployed;
         [Range(2,6)] public int MinimumTraining;
         [Range(2,6)] public int MaximumTraining;

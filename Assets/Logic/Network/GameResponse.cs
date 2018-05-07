@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Logic.Gameplay.Players;
+using Logic.Gameplay.Ships;
 using Logic.Utilities;
 
 namespace Logic.Network
@@ -31,12 +32,15 @@ namespace Logic.Network
         public float[] location;
         public float rotation;
         public int speed;
+        public Order? order;
+        public Dictionary<int, int> system_status;
     }
 
     public enum TurnType
     {
         Deploy,
         Move,
-        Act
+        Act,
+        CommandPhase
     }
 }

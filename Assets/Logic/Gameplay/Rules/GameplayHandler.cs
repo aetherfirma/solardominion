@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 using Logic.Display;
 using Logic.Gameplay.Players;
 using Logic.Gameplay.Ships;
+using Logic.Network;
 using Logic.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
@@ -147,6 +147,7 @@ namespace Logic.Gameplay.Rules
                     CommandPhase();
                     break;
                 case TurnPhase.Movement:
+                    _referee.DisplayUpperText("Movement phase");
                     break;
                 case TurnPhase.Action:
                     break;
@@ -298,14 +299,53 @@ namespace Logic.Gameplay.Rules
 
         private void BroadcastShipCommandState(Ship ship)
         {
-            throw new NotImplementedException();
+            var turn = new Turn
+            {
+                action = TurnType.CommandPhase,
+                player = ship.Player.Uuid,
+                ship = ship.ShipUuid,
+                system_status = new Dictionary<int, int>()
+            };
+
+            if (ship.UnderOrders) turn.order = ship.Order;
+
+            for (var i = 0; i < ship.Systems.Length; i++)
+            {
+                if (ship.Systems[i].Type == SystemType.Composite)
+                {
+                    turn.system_status[i] = ship.Systems[i].ChosenSubsystem;
+                }
+            }
+
+            var wwwForm = new WWWForm();
+            wwwForm.AddField("player", _referee.PlayerUuid);
+            wwwForm.AddField("turn", StringSerializationAPI.Serialize<Turn>(turn));
+
+            SimpleRequest.Post(
+                _referee.ServerUrl + "/game/" + _referee.GameUuid + "/turn", wwwForm,
+                www =>
+                {
+                    var response = GameResponse.FromJson(www.downloadHandler.text);
+                    _referee.LastObservedInstruction = response.turns.Count;
+                    _referee.SetGameState(response);
+                },
+                www => _referee.FlashMessage("There was a server error (" + www.responseCode +  ") creating a game\n"+www.error),
+                www => _referee.FlashMessage("There was a network error creating a game\n"+www.error)
+            );
         }
 
         private void CommandPhase()
         {
+            var state = _referee.UpdateGameState();
+
             while (_shipsInInitiativeStep == null || _shipsInInitiativeStep.Count == 0)
             {
                 _currentInitiativeStep++;
+                if (_currentInitiativeStep == 13)
+                {
+                    _phase = TurnPhase.Movement;
+                    return;
+                }
                 SetupInitiativeStep();
                 _currentPlayer = _initativePhaseStartingPlayer;
             }
@@ -313,6 +353,34 @@ namespace Logic.Gameplay.Rules
             if (_currentPlayer.Number != _referee.LocalPlayer)
             {
                 _referee.DisplayUpperText(string.Format("Waiting for {0:} to play", _currentPlayer.Faction));
+                
+                if (_referee.LastObservedInstruction < state.turns.Count)
+                {
+                    for (var i = _referee.LastObservedInstruction; i < state.turns.Count; i++)
+                    {
+                        var turn = state.turns[i];
+                        if (turn.player != _referee.PlayerUuid || turn.action != TurnType.CommandPhase)
+                        {
+                            var ship = _currentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                            _referee.FlashMessage(string.Format("Just recieved order for {0:}", ship.Name()));
+
+                            if (turn.order != null)
+                            {
+                                ship.Order = (Order) turn.order;
+                            }
+
+                            foreach (var system in turn.system_status.Keys)
+                            {
+                                ship.Systems[system].ChosenSubsystem = turn.system_status[system];
+                            }
+                        
+                            RemoveShipFromStep(ship);
+                        }
+                        _referee.LastObservedInstruction = i + 1;
+                        NextPlayer();
+                    }
+                }
+
             }
             else
             {

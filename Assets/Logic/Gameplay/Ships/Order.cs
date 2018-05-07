@@ -1,6 +1,6 @@
 ﻿namespace Logic.Gameplay.Ships
 {
-    public enum Orders
+    public enum Order
     {
         LockOnTarget,
         BraceForImpact,

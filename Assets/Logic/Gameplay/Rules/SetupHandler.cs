@@ -44,12 +44,16 @@ namespace Logic.Gameplay.Rules
                     for (int i = _referee.LastObservedInstruction; i < state.turns.Count; i++)
                     {
                         var turn = state.turns[i];
-                        var ship = _referee.Players[_referee.CurrentPlayer].Fleet.Single(s => s.ShipUuid == turn.ship);
-                        ship.transform.position = new Vector3(turn.location[0], 0, turn.location[1]);
-                        ship.Speed = turn.speed;
-                        ship.transform.rotation = Quaternion.Euler(0, turn.rotation, 0);
-                        ship.Deployed = true;
-                        _referee.LastObservedInstruction = i;
+                        if (turn.player != _referee.PlayerUuid || turn.action != TurnType.Deploy)
+                        {
+                            var ship = _referee.Players[_referee.CurrentPlayer].Fleet.Single(s => s.ShipUuid == turn.ship);
+                            _referee.FlashMessage(string.Format("Just recieved deployment for {0:}", ship.Name()));
+                            ship.transform.position = new Vector3(turn.location[0], 0, turn.location[1]);
+                            ship.Speed = turn.speed;
+                            ship.transform.rotation = Quaternion.Euler(0, turn.rotation, 0);
+                            ship.Deployed = true;
+                        }
+                        _referee.LastObservedInstruction = i + 1;
                         if (!FindNextSetupPlayer()) _referee.Phase = GamePhase.Play;
                     }
                 }
@@ -61,6 +65,7 @@ namespace Logic.Gameplay.Rules
             var turn = new Turn
             {
                 action = TurnType.Deploy,
+                player = ship.Player.Uuid,
                 ship = ship.ShipUuid,
                 location = new[] {ship.transform.position.x, ship.transform.position.z},
                 rotation = ship.transform.rotation.eulerAngles.y,

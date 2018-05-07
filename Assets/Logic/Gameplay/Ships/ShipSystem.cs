@@ -10,7 +10,7 @@ namespace Logic.Gameplay.Ships
         public int Thrust;
         public int Defence;
         public int Shots, Range, Damage;
-        public Orders[] Orders;
+        public Order[] Orders;
         public GameObject Model;
         public bool Displayed;
         public Texture2D[] CardImages;
