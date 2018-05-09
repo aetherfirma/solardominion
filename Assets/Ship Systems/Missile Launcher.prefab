@@ -56,8 +56,13 @@ MonoBehaviour:
   Thrust: 2
   Defence: 0
   Shots: 1
-  Range: 15
   Damage: 3
+  ShortRange: 15
+  ShortModifier: 3
+  MediumRange: 30
+  MediumModifier: 2
+  LongRange: 60
+  LongModifier: 5
   Orders: 00000000010000000200000003000000
   Model: {fileID: 100002, guid: 8adb0fb7b98d9074ca1535d2a23d3b35, type: 3}
   Displayed: 1

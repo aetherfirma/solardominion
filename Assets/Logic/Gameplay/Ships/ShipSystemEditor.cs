@@ -10,7 +10,7 @@ namespace Logic.Gameplay.Ships
         public SerializedProperty SubSystems;
         public SerializedProperty Thrust;
         public SerializedProperty Defence;
-        public SerializedProperty Shots, Range, Damage;
+        public SerializedProperty Shots, Damage, ShortRange, ShortModifier, MediumRange, MediumModifier, LongRange, LongModifier;
         public SerializedProperty Orders;
         public SerializedProperty Model;
         public SerializedProperty Displayed;
@@ -25,8 +25,13 @@ namespace Logic.Gameplay.Ships
             Thrust = serializedObject.FindProperty("Thrust");
             Defence = serializedObject.FindProperty("Defence");
             Shots = serializedObject.FindProperty("Shots");
-            Range = serializedObject.FindProperty("Range");
             Damage = serializedObject.FindProperty("Damage");
+            ShortRange = serializedObject.FindProperty("ShortRange");
+            ShortModifier = serializedObject.FindProperty("ShortModifier");
+            MediumRange = serializedObject.FindProperty("MediumRange");
+            MediumModifier = serializedObject.FindProperty("MediumModifier");
+            LongRange = serializedObject.FindProperty("LongRange");
+            LongModifier = serializedObject.FindProperty("LongModifier");
             Orders = serializedObject.FindProperty("Orders");
             Model = serializedObject.FindProperty("Model");
             Displayed = serializedObject.FindProperty("Displayed");
@@ -46,8 +51,13 @@ namespace Logic.Gameplay.Ships
                     break;
                 case 1:
                     EditorGUILayout.PropertyField(Shots);
-                    EditorGUILayout.PropertyField(Range);
                     EditorGUILayout.PropertyField(Damage);
+                    EditorGUILayout.PropertyField(ShortRange);
+                    EditorGUILayout.PropertyField(ShortModifier);
+                    EditorGUILayout.PropertyField(MediumRange);
+                    EditorGUILayout.PropertyField(MediumModifier);
+                    EditorGUILayout.PropertyField(LongRange);
+                    EditorGUILayout.PropertyField(LongModifier);
                     break;
                 case 2:
                     EditorGUILayout.PropertyField(Orders, true);

@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: 4326311305882816}
   - component: {fileID: 114874932384717118}
   m_Layer: 0
-  m_Name: Alcubierre Defence
+  m_Name: Alcubierre Shield
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -53,12 +53,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 4
   SubSystems: []
-  ChosenSubsystem: -1
   Thrust: 2
   Defence: 2
   Shots: 1
-  Range: 15
   Damage: 3
+  ShortRange: 0
+  ShortModifier: 0
+  MediumRange: 0
+  MediumModifier: 0
+  LongRange: 0
+  LongModifier: 0
   Orders: 00000000010000000200000003000000
   Model: {fileID: 0}
   Displayed: 0

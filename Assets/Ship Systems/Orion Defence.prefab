@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: 4982768593692264}
   - component: {fileID: 114978155916590816}
   m_Layer: 0
-  m_Name: Orion Defence
+  m_Name: Orion Drive
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -55,12 +55,16 @@ MonoBehaviour:
   SubSystems:
   - {fileID: 114874932384717118, guid: 190cf3a4c1fb7434fbe35376a66080c4, type: 2}
   - {fileID: 114318547020637492, guid: 6b541d475c80347419348f420a26bac1, type: 2}
-  ChosenSubsystem: -1
   Thrust: 6
   Defence: 2
   Shots: 6
-  Range: 5
   Damage: 2
+  ShortRange: 0
+  ShortModifier: 0
+  MediumRange: 0
+  MediumModifier: 0
+  LongRange: 0
+  LongModifier: 0
   Orders: 00000000010000000200000003000000
   Model: {fileID: 0}
   Displayed: 0

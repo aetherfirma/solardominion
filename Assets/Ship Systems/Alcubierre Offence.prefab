@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: 4399900971709272}
   - component: {fileID: 114318547020637492}
   m_Layer: 0
-  m_Name: Alcubierre Offence
+  m_Name: Photon Lance
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -53,12 +53,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 1
   SubSystems: []
-  ChosenSubsystem: -1
   Thrust: 2
   Defence: 2
   Shots: 1
-  Range: 25
   Damage: 5
+  ShortRange: 20
+  ShortModifier: 5
+  MediumRange: 40
+  MediumModifier: 2
+  LongRange: 80
+  LongModifier: 4
   Orders: 00000000010000000200000003000000
   Model: {fileID: 0}
   Displayed: 0

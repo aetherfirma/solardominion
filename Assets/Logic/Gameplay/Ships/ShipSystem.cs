@@ -8,7 +8,7 @@ namespace Logic.Gameplay.Ships
         public ShipSystem[] SubSystems;
         public int Thrust;
         public int Defence;
-        public int Shots, Range, Damage;
+        public int Shots, Damage, ShortRange, ShortModifier, MediumRange, MediumModifier, LongRange, LongModifier;
         public Order[] Orders;
         public GameObject Model;
         public bool Displayed;
