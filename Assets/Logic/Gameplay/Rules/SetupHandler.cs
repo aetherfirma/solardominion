@@ -44,7 +44,7 @@ namespace Logic.Gameplay.Rules
                     for (int i = _referee.LastObservedInstruction; i < state.turns.Count; i++)
                     {
                         var turn = state.turns[i];
-                        if (turn.player != _referee.PlayerUuid || turn.action != TurnType.Deploy)
+                        if (turn.player != _referee.PlayerUuid && turn.action == TurnType.Deploy)
                         {
                             var ship = _referee.Players[_referee.CurrentPlayer].Fleet.Single(s => s.ShipUuid == turn.ship);
                             _referee.FlashMessage(string.Format("Just recieved deployment for {0:}", ship.Name()));

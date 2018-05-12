@@ -14,6 +14,7 @@ namespace Logic.Gameplay.Ships
         public Player Player;
         public string ShipUuid;
         public bool[] Damage;
+        public bool[] Used;
         public int[] Subsystem;
         public int Speed;
         public int Training;
@@ -34,7 +35,8 @@ namespace Logic.Gameplay.Ships
         public void CalculateThrust()
         {
             ThrustRemaining = Systems
-                .Select((system, index) => system.Type == SystemType.Composite ? system.SubSystems[Subsystem[index]] : system)
+                .Select((system, index) =>
+                    system.Type == SystemType.Composite ? system.SubSystems[Subsystem[index]] : system)
                 .Where(system => system.Type == SystemType.Engine)
                 .Sum(system => system.Thrust);
         }
@@ -61,7 +63,11 @@ namespace Logic.Gameplay.Ships
         public void SetInitiative(WellRng rng)
         {
             Initiative = Training + rng.D6();
-            for (var i = 0; i < Systems.Length; i++) Subsystem[i] = -1;
+            for (var i = 0; i < Systems.Length; i++)
+            {
+                Subsystem[i] = -1;
+                Used[i] = false;
+            }
         }
 
         public int CalculateCost(int training)
@@ -123,7 +129,9 @@ namespace Logic.Gameplay.Ships
                         break;
                 }
             }
-            catch (NullReferenceException) {}
+            catch (NullReferenceException)
+            {
+            }
 
             return prefix + " Spaceship";
         }
@@ -131,8 +139,17 @@ namespace Logic.Gameplay.Ships
         private void SetupStatusArrays()
         {
             Damage = new bool[Systems.Length];
+            Used = new bool[Systems.Length];
             Subsystem = new int[Systems.Length];
             for (var i = 0; i < Systems.Length; i++) Subsystem[i] = -1;
+        }
+
+        public bool ShouldShipContinue()
+        {
+            return Systems.Select((t, i) => t.ResolveSystem(Subsystem[i]))
+                .Where((system, i) => (system.Type == SystemType.Weapon ||
+                                      system.Type == SystemType.Hangar) && !Damage[i] && !Used[i])
+                .Any();
         }
 
         public Ship Initialise(int training, Player player = null, string uuid = null)

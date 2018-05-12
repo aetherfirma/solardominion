@@ -151,13 +151,284 @@ namespace Logic.Gameplay.Rules
                     MovementPhase();
                     break;
                 case TurnPhase.Action:
-                    _referee.DisplayUpperText("Action Phase!");
+                    ActionPhase();
                     break;
                 case TurnPhase.Cleanup:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+        private Ship _target;
+
+        private void ActionPhase()
+        {
+            GameResponse state;
+            if (UpdateStateAndUpdateInitiative(out state)) return;
+
+            if (_currentPlayer.Number != _referee.LocalPlayer)
+            {
+                _referee.DisplayUpperText(string.Format("Waiting for {0:} to play", _currentPlayer.Faction));
+
+                if (_referee.LastObservedInstruction < state.turns.Count)
+                {
+                    for (var i = _referee.LastObservedInstruction; i < state.turns.Count; i++)
+                    {
+                        var turn = state.turns[i];
+                        if (turn.player != _referee.PlayerUuid && turn.action == TurnType.ActionEnd)
+                        {
+                            var ship = _currentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                            _referee.FlashMessage(string.Format("Turn over for {0:}", ship.Name()));
+
+                            // Obey Action
+
+                            RemoveShipFromStep(ship);
+                            NextPlayer();
+                        } 
+                        else if (turn.player != _referee.PlayerUuid && turn.action == TurnType.ActionChallenge)
+                        {
+                            _referee.FlashMessage("Need to respond");
+                            var firingShip = _currentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                            var targetShip = _currentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                            
+                        }
+
+                        _referee.LastObservedInstruction = i + 1;
+                    }
+                }
+            }
+            else
+            {
+                _referee.DisplayUpperText("");
+
+                if (_selection == null)
+                {
+                    CircleSelectableShips();
+
+                    if (Input.GetMouseButtonUp(0) && _referee.MouseSelection)
+                    {
+                        var ship = _referee.MouseSelection.GetComponent<Ship>();
+                        if (ship != null && _shipsInInitiativeStep[_currentPlayer].Contains(ship))
+                        {
+                            ClearArcs();
+                            _selection = ship;
+                            _arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
+                            DrawSystemsDisplay(
+                                ship,
+                                (index, system, subsystem) =>
+                                    system.Type == SystemType.Weapon || system.Type == SystemType.Hangar ||
+                                    (system.Type == SystemType.Composite &&
+                                     (system.SubSystems[subsystem].Type == SystemType.Weapon ||
+                                      system.SubSystems[subsystem].Type == SystemType.Hangar)),
+                                (index, system, subsystem, image) =>
+                                {
+                                    if (system.Type == SystemType.Composite) system = system.SubSystems[subsystem];
+                                    
+                                    switch (system.Type)
+                                    {
+                                        case SystemType.Weapon:
+                                            if (_selectedWeapon == null)
+                                            {
+                                                _selectedWeapon = system;
+                                                _selectedSystems.Add(index);
+                                                image.color = Color.yellow;
+                                            }
+                                            else
+                                            {
+                                                if (_selectedSystems.Contains(index))
+                                                {
+                                                    _selectedSystems.Remove(index);
+                                                    image.color = Color.white;
+                                                    if (_selectedSystems.Count == 0) _selectedWeapon = null;
+                                                }
+                                                else
+                                                {
+                                                    if (_selectedWeapon == system)
+                                                    {
+                                                        image.color = Color.yellow;
+                                                        _selectedSystems.Add(index);
+                                                    }
+                                                    else
+                                                    {
+                                                        _referee.FlashMessage("Cannot combine different weapon types", 10);
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        case SystemType.Hangar:
+                                            _referee.FlashMessage("Would deploy a ship");
+                                            break;
+                                    }
+                                },
+                                selectedShip =>
+                                {
+                                    _lowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
+                                    _selection = null;
+                                    RemoveShipFromStep(selectedShip);
+                                    BroadcastEndOfAction(selectedShip);
+                                    ClearArcs();
+                                    _lowerBar.transform.Find("Text").GetComponent<Text>().text = "";
+
+                                    NextPlayer();
+                                }
+                            );
+                        }
+                    }
+                }
+                else
+                {
+                    if (_target)
+                    {
+                        _referee.DisplayUpperText(string.Format("Waiting for {0:} to respond", _target.Player.Faction));
+                        
+                        if (_referee.LastObservedInstruction < state.turns.Count)
+                        {
+                            for (var i = _referee.LastObservedInstruction; i < state.turns.Count; i++)
+                            {
+                                var turn = state.turns[i];
+                                if (turn.action == TurnType.ActionResponse)
+                                {
+                                    var ship = _currentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                                    _referee.FlashMessage(string.Format("Just recieved reply for {0:}", ship.Name()));
+                                    _referee.DisplayUpperText("");
+
+                                    // Obey Action
+
+                                    RemoveShipFromStep(ship);
+                                }
+
+                                _referee.LastObservedInstruction = i + 1;
+                                NextPlayer();
+                            }
+                        }
+
+                    }
+                    else if (Input.GetMouseButtonUp(0) && _referee.MouseSelection && _selectedWeapon != null)
+                    {
+                        var ship = _referee.MouseSelection.GetComponent<Ship>();
+                        if (ship != null && ship.Player != _currentPlayer)
+                        {
+                            if (IsInRange(_selection, _selectedWeapon, ship))
+                            {
+                                _target = ship;
+                                _lowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
+                                _arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
+                                BroadcastWeaponFiring(_selection, _selectedWeapon, _selectedSystems, _target);
+                                _referee.DisplayUpperText("Waiting on response");
+                            }
+                            else
+                            {
+                                _referee.FlashMessage(string.Format("Cannot fire {0:} at {1:}, out of range.", _selectedWeapon.name, ship.Name()));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void BroadcastWeaponFiring(Ship ship, ShipSystem selectedWeapon, List<int> selectedSystems, Ship target)
+        {
+            var modifier = GetRangeModifier(ship, selectedWeapon, target);
+
+            var turn = new Turn
+            {
+                action = TurnType.ActionChallenge,
+                player = ship.Player.Uuid,
+                ship = ship.ShipUuid,
+                target = target.ShipUuid,
+                weapon = selectedWeapon.name,
+                damage =  selectedWeapon.Damage,
+                shots = selectedSystems.Count * selectedWeapon.Shots,
+                defence_modifier = modifier
+            };
+
+            var wwwForm = new WWWForm();
+            wwwForm.AddField("player", _referee.PlayerUuid);
+            wwwForm.AddField("turn", StringSerializationAPI.Serialize<Turn>(turn));
+
+            SimpleRequest.Post(
+                _referee.ServerUrl + "/game/" + _referee.GameUuid + "/turn", wwwForm,
+                www =>
+                {
+                    var response = GameResponse.FromJson(www.downloadHandler.text);
+                    _referee.LastObservedInstruction = response.turns.Count;
+                    _referee.SetGameState(response);
+                },
+                www => _referee.FlashMessage("There was a server error (" + www.responseCode + ") creating a game\n" +
+                                             www.error),
+                www => _referee.FlashMessage("There was a network error creating a game\n" + www.error)
+            );
+        }
+
+        private void BroadcastEndOfAction(Ship ship)
+        {
+            var turn = new Turn
+            {
+                action = TurnType.ActionEnd,
+                player = ship.Player.Uuid,
+                ship = ship.ShipUuid
+            };
+
+            var wwwForm = new WWWForm();
+            wwwForm.AddField("player", _referee.PlayerUuid);
+            wwwForm.AddField("turn", StringSerializationAPI.Serialize<Turn>(turn));
+
+            SimpleRequest.Post(
+                _referee.ServerUrl + "/game/" + _referee.GameUuid + "/turn", wwwForm,
+                www =>
+                {
+                    var response = GameResponse.FromJson(www.downloadHandler.text);
+                    _referee.LastObservedInstruction = response.turns.Count;
+                    _referee.SetGameState(response);
+                },
+                www => _referee.FlashMessage("There was a server error (" + www.responseCode + ") creating a game\n" +
+                                             www.error),
+                www => _referee.FlashMessage("There was a network error creating a game\n" + www.error)
+            );
+        }
+
+        private static int GetRangeModifier(Ship ship, ShipSystem selectedWeapon, Ship target)
+        {
+            var range = (ship.transform.position - target.transform.position).magnitude;
+            if (range < selectedWeapon.ShortRange) return selectedWeapon.ShortModifier;
+            if (range < selectedWeapon.MediumRange) return selectedWeapon.MediumModifier;
+            return selectedWeapon.LongModifier;
+        }
+
+        private static bool IsInRange(Ship ship, ShipSystem selectedWeapon, Ship target)
+        {
+            var range = (ship.transform.position - target.transform.position).magnitude;
+            return range < selectedWeapon.LongRange;
+        }
+
+        private void CircleSelectableShips()
+        {
+            if (_arcs.Count != 0) return;
+            foreach (var ship in _shipsInInitiativeStep[_currentPlayer])
+            {
+                _arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.white));
+            }
+        }
+
+        private bool UpdateStateAndUpdateInitiative(out GameResponse state)
+        {
+            state = _referee.UpdateGameState();
+
+            while (_shipsInInitiativeStep == null || _shipsInInitiativeStep.Count == 0)
+            {
+                _currentInitiativeStep++;
+                if (_currentInitiativeStep == 13)
+                {
+                    IncrementPhase();
+                    return true;
+                }
+
+                SetupInitiativeStep();
+                _currentPlayer = _initativePhaseStartingPlayer;
+            }
+
+            return false;
         }
 
         private void InitiativePhase()
@@ -183,7 +454,8 @@ namespace Logic.Gameplay.Rules
             _arcs.Clear();
         }
 
-        private void DrawSystemsDisplay(Ship ship)
+        private void DrawSystemsDisplay(Ship ship, Func<int, ShipSystem, int, bool> isInteractable,
+            Action<int, ShipSystem, int, Image> onClick, Action<Ship> onComplete)
         {
             _lowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
             _lowerBar.transform.Find("Text").GetComponent<Text>().text = ship.Name();
@@ -195,8 +467,8 @@ namespace Logic.Gameplay.Rules
             {
                 var system = ship.Systems[i];
                 var damaged = ship.Damage[i];
+                var used = ship.Used[i];
                 var subsystem = ship.Subsystem[i];
-                var systemIndex = i;
 
                 var icon = new GameObject("system icon", typeof(Image), typeof(Button), typeof(RectTransform));
                 icon.SetAsChild(_lowerBar);
@@ -224,36 +496,18 @@ namespace Logic.Gameplay.Rules
                 button = icon.GetComponent<Button>();
 
                 button.targetGraphic = image;
-                var interactable =
-                    !damaged && (system.Type == SystemType.Command || system.Type == SystemType.Composite);
+                var interactable = !damaged && !used && isInteractable(i, system, subsystem);
+
                 button.interactable = interactable;
 
                 var card = button.gameObject.AddComponent<CardTooltip>();
                 card.Image = system.CardImages[(int) ship.Player.Faction];
                 card.ParentTransform = _referee.UiCanvas;
 
-                if (interactable)
-                {
-                    switch (system.Type)
-                    {
-                        case SystemType.Composite:
-                            button.onClick.AddListener(() =>
-                            {
-                                ship.Subsystem[systemIndex] =
-                                    (ship.Subsystem[systemIndex] + 1) % system.SubSystems.Length;
-                                _referee.FlashMessage(string.Format("Set {0:} to {1:}", system.name,
-                                    system.SubSystems[ship.Subsystem[systemIndex]].name));
-                                var texture2D = system.SubSystems[ship.Subsystem[systemIndex]].Icon;
-                                image.sprite = Sprite.Create(texture2D,
-                                    new Rect(0, 0, texture2D.width, texture2D.height),
-                                    new Vector2(texture2D.width / 2f, texture2D.height / 2f));
-                            });
-                            break;
-                        case SystemType.Command:
-                            button.onClick.AddListener(() => { _referee.FlashMessage("Would add an order"); });
-                            break;
-                    }
-                }
+                var unmodifiedImage = image;
+                var unmodifiedIndex = i;
+                var unmodifiedSubsystem = subsystem;
+                if (interactable) button.onClick.AddListener(() => onClick(unmodifiedIndex, system, unmodifiedSubsystem, unmodifiedImage));
 
                 image.color = interactable
                     ? Color.white
@@ -272,24 +526,7 @@ namespace Logic.Gameplay.Rules
 
             button = done.GetComponent<Button>();
             button.image = iconImage;
-            button.onClick.AddListener(() =>
-            {
-                if (ship.Systems.Where((t, i) => t.Type == SystemType.Composite && ship.Subsystem[i] == -1).Any())
-                {
-                    _referee.FlashMessage("All composite systems must be set to one of their options");
-                    return;
-                }
-
-                _lowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
-                _selection = null;
-                ship.CalculateThrust();
-                RemoveShipFromStep(ship);
-                BroadcastShipCommandState(ship);
-                ClearArcs();
-                _lowerBar.transform.Find("Text").GetComponent<Text>().text = "";
-
-                NextPlayer();
-            });
+            button.onClick.AddListener(() => { onComplete(ship); });
 
             var textObj = new GameObject("Text", typeof(Text), typeof(RectTransform));
             textObj.SetAsChild(done.transform);
@@ -344,22 +581,13 @@ namespace Logic.Gameplay.Rules
             );
         }
 
+        private ShipSystem _selectedWeapon;
+        private List<int> _selectedSystems = new List<int>();
+
         private void CommandPhase()
         {
-            var state = _referee.UpdateGameState();
-
-            while (_shipsInInitiativeStep == null || _shipsInInitiativeStep.Count == 0)
-            {
-                _currentInitiativeStep++;
-                if (_currentInitiativeStep == 13)
-                {
-                    IncrementPhase();
-                    return;
-                }
-
-                SetupInitiativeStep();
-                _currentPlayer = _initativePhaseStartingPlayer;
-            }
+            GameResponse state;
+            if (UpdateStateAndUpdateInitiative(out state)) return;
 
             if (_currentPlayer.Number != _referee.LocalPlayer)
             {
@@ -370,7 +598,7 @@ namespace Logic.Gameplay.Rules
                     for (var i = _referee.LastObservedInstruction; i < state.turns.Count; i++)
                     {
                         var turn = state.turns[i];
-                        if (turn.player != _referee.PlayerUuid || turn.action != TurnType.CommandPhase)
+                        if (turn.player != _referee.PlayerUuid && turn.action == TurnType.CommandPhase)
                         {
                             var ship = _currentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
                             _referee.FlashMessage(string.Format("Just recieved order for {0:}", ship.Name()));
@@ -400,13 +628,7 @@ namespace Logic.Gameplay.Rules
 
                 if (_selection == null)
                 {
-                    if (_arcs.Count == 0)
-                    {
-                        foreach (var ship in _shipsInInitiativeStep[_currentPlayer])
-                        {
-                            _arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.white));
-                        }
-                    }
+                    CircleSelectableShips();
 
                     if (Input.GetMouseButtonUp(0) && _referee.MouseSelection)
                     {
@@ -416,7 +638,50 @@ namespace Logic.Gameplay.Rules
                             ClearArcs();
                             _selection = ship;
                             _arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
-                            DrawSystemsDisplay(ship);
+                            DrawSystemsDisplay(
+                                ship,
+                                (index, system, subsystem) =>
+                                    system.Type == SystemType.Command || system.Type == SystemType.Composite,
+                                (index, system, subsystem, image) =>
+                                {
+                                    switch (system.Type)
+                                    {
+                                        case SystemType.Composite:
+                                            ship.Subsystem[index] =
+                                                (subsystem + 1) % system.SubSystems.Length;
+                                            _referee.FlashMessage(string.Format("Set {0:} to {1:}", system.name,
+                                                system.SubSystems[ship.Subsystem[index]].name));
+                                            var texture2D = system.SubSystems[ship.Subsystem[index]].Icon;
+                                            image.sprite = Sprite.Create(texture2D,
+                                                new Rect(0, 0, texture2D.width, texture2D.height),
+                                                new Vector2(texture2D.width / 2f, texture2D.height / 2f));
+                                            break;
+                                        case SystemType.Command:
+                                            _referee.FlashMessage("Would add an order");
+                                            break;
+                                    }
+                                },
+                                selectedShip =>
+                                {
+                                    if (selectedShip.Systems.Where((t, i) =>
+                                        t.Type == SystemType.Composite && selectedShip.Subsystem[i] == -1).Any())
+                                    {
+                                        _referee.FlashMessage(
+                                            "All composite systems must be set to one of their options");
+                                        return;
+                                    }
+
+                                    _lowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
+                                    _selection = null;
+                                    selectedShip.CalculateThrust();
+                                    RemoveShipFromStep(selectedShip);
+                                    BroadcastShipCommandState(selectedShip);
+                                    ClearArcs();
+                                    _lowerBar.transform.Find("Text").GetComponent<Text>().text = "";
+
+                                    NextPlayer();
+                                }
+                            );
                         }
                     }
                 }
@@ -425,20 +690,8 @@ namespace Logic.Gameplay.Rules
 
         private void MovementPhase()
         {
-            var state = _referee.UpdateGameState();
-
-            while (_shipsInInitiativeStep == null || _shipsInInitiativeStep.Count == 0)
-            {
-                _currentInitiativeStep++;
-                if (_currentInitiativeStep == 13)
-                {
-                    IncrementPhase();
-                    return;
-                }
-
-                SetupInitiativeStep();
-                _currentPlayer = _initativePhaseStartingPlayer;
-            }
+            GameResponse state;
+            if (UpdateStateAndUpdateInitiative(out state)) return;
 
             if (_currentPlayer.Number != _referee.LocalPlayer)
             {
@@ -449,14 +702,15 @@ namespace Logic.Gameplay.Rules
                     for (var i = _referee.LastObservedInstruction; i < state.turns.Count; i++)
                     {
                         var turn = state.turns[i];
-                        if (turn.player != _referee.PlayerUuid || turn.action != TurnType.MovementPhase)
+                        if (turn.player != _referee.PlayerUuid && turn.action == TurnType.MovementPhase)
                         {
                             var ship = _currentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
                             _referee.FlashMessage(string.Format("Just recieved movement for {0:}", ship.Name()));
-                            
+
                             var newPosition = new Vector3(turn.location[0], 0, turn.location[1]);
 
-                            var leadingPoint = ship.transform.position + ship.transform.rotation * (Vector3.forward*ship.Speed);
+                            var leadingPoint = ship.transform.position +
+                                               ship.transform.rotation * (Vector3.forward * ship.Speed);
                             var distance = newPosition - leadingPoint;
                             var thrust = Mathf.CeilToInt(distance.magnitude / ship.DistancePerThrust());
                             if (thrust > ship.ThrustRemaining)
@@ -485,13 +739,7 @@ namespace Logic.Gameplay.Rules
 
                 if (_selection == null)
                 {
-                    if (_arcs.Count == 0)
-                    {
-                        foreach (var ship in _shipsInInitiativeStep[_currentPlayer])
-                        {
-                            _arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.white));
-                        }
-                    }
+                    CircleSelectableShips();
 
                     if (Input.GetMouseButtonUp(0) && _referee.MouseSelection)
                     {
@@ -519,7 +767,8 @@ namespace Logic.Gameplay.Rules
                 {
                     if (Input.GetMouseButtonUp(0))
                     {
-                        var leadingPoint = _selection.transform.position + _selection.transform.rotation * (Vector3.forward*_selection.Speed);
+                        var leadingPoint = _selection.transform.position +
+                                           _selection.transform.rotation * (Vector3.forward * _selection.Speed * 5);
                         var distance = _referee.MouseLocation - leadingPoint;
                         var thrust = Mathf.CeilToInt(distance.magnitude / _selection.DistancePerThrust());
                         if (thrust > _selection.ThrustRemaining)

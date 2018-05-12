@@ -5,7 +5,7 @@
         Engine,
         Weapon,
         Command,
-        Hanger,
+        Hangar,
         Defence,
         Composite
     }

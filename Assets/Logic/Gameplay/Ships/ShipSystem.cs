@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Runtime.InteropServices;
+using UnityEngine;
 
 namespace Logic.Gameplay.Ships
 {
@@ -15,5 +16,10 @@ namespace Logic.Gameplay.Ships
         public Texture2D[] CardImages;
         public Texture2D Icon;
         public int[] Cost;
+
+        public ShipSystem ResolveSystem(int subsystem)
+        {
+            return Type != SystemType.Composite ? this : SubSystems[subsystem];
+        }
     }
 }

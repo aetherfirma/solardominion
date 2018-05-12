@@ -34,13 +34,20 @@ namespace Logic.Network
         public int speed;
         public Order? order;
         public Dictionary<int, int> system_status;
+        public int defence_modifier;
+        public int shots;
+        public int damage;
+        public string weapon;
     }
 
     public enum TurnType
     {
         Deploy,
         MovementPhase,
-        Act,
+        ActionChallenge,
+        ActionPhase,
+        ActionResponse,
+        ActionEnd,
         CommandPhase
     }
 }

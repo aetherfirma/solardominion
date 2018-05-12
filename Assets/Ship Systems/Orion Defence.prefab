@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: 4982768593692264}
   - component: {fileID: 114978155916590816}
   m_Layer: 0
-  m_Name: Orion Drive
+  m_Name: Orion Defence
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
