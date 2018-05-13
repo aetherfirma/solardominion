@@ -106,13 +106,12 @@ namespace Logic.Gameplay.Rules.GamePhases
                                         return;
                                     }
 
-                                    _gameplayHandler.LowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
+                                    _gameplayHandler.ClearSystemsDisplay();
                                     _selection = null;
                                     selectedShip.CalculateThrust();
                                     _gameplayHandler.RemoveShipFromStep(selectedShip);
                                     BroadcastShipCommandState(selectedShip);
                                     _gameplayHandler.ClearArcs();
-                                    _gameplayHandler.LowerBar.transform.Find("Text").GetComponent<Text>().text = "";
 
                                     _gameplayHandler.NextPlayer();
                                 }

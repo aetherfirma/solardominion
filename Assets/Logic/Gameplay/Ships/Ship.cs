@@ -41,6 +41,15 @@ namespace Logic.Gameplay.Ships
                 .Sum(system => system.Thrust);
         }
 
+        public int CalculateDefensiveModifier()
+        {
+            return Systems
+                .Select((system, index) =>
+                    system.Type == SystemType.Composite ? system.SubSystems[Subsystem[index]] : system)
+                .Where(system => system.Type == SystemType.Defence)
+                .Sum(system => system.Defence);
+        }
+
         public float DistancePerThrust()
         {
             switch (Class)

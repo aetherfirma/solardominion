@@ -223,8 +223,7 @@ namespace Logic.Gameplay.Rules
         public void DrawSystemsDisplay(Ship ship, Func<int, ShipSystem, int, bool> isInteractable,
             Action<int, ShipSystem, int, Image> onClick, Action<Ship> onComplete)
         {
-            LowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
-            LowerBar.transform.Find("Text").GetComponent<Text>().text = ship.Name();
+            ClearSystemsDisplay();
 
             var systemsLength = ship.Systems.Length;
             RectTransform rectTransform;
@@ -312,6 +311,12 @@ namespace Logic.Gameplay.Rules
         public bool IsShipSelectable(Ship ship)
         {
             return ShipsInInitiativeStep[CurrentPlayer].Contains(ship);
+        }
+
+        public void ClearSystemsDisplay()
+        {
+            LowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
+            LowerBar.transform.Find("Text").GetComponent<Text>().text = "";
         }
     }
 

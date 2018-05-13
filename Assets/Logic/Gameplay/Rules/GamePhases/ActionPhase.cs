@@ -13,7 +13,7 @@ namespace Logic.Gameplay.Rules.GamePhases
     public class ActionPhase
     {
         private GameplayHandler _gameplayHandler;
-        
+
         private Ship _selection;
         private Ship _target;
         private ShipSystem _selectedWeapon;
@@ -62,7 +62,8 @@ namespace Logic.Gameplay.Rules.GamePhases
                 {
                     _gameplayHandler.ClearArcs();
                     _selection = ship;
-                    _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
+                    _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform, 7, 0.5f, 0, Mathf.PI * 2, 64,
+                        Color.red));
                     DrawActionSystemsDisplay(ship);
                 }
             }
@@ -78,15 +79,18 @@ namespace Logic.Gameplay.Rules.GamePhases
                     if (IsInRange(_selection, _selectedWeapon, ship))
                     {
                         _target = ship;
-                        _gameplayHandler.LowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
-                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64,
+                        _gameplayHandler.ClearSystemsDisplay();
+                        _gameplayHandler.ClearArcs();
+                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform, 7, 0.5f, 0, Mathf.PI * 2, 64,
+                            Color.red));
+                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_target.transform, 7, 0.5f, 0, Mathf.PI * 2, 64,
                             Color.red));
                         BroadcastWeaponFiring(_selection, _selectedWeapon, _selectedSystems, _target);
                         _gameplayHandler.Referee.DisplayUpperText("Waiting on response");
                     }
                     else
                     {
-                        _gameplayHandler.Referee.FlashMessage(String.Format("Cannot fire {0:} at {1:}, out of range.",
+                        _gameplayHandler.Referee.FlashMessage(string.Format("Cannot fire {0:} at {1:}, out of range.",
                             _selectedWeapon.name, ship.Name()));
                     }
                 }
@@ -139,6 +143,12 @@ namespace Logic.Gameplay.Rules.GamePhases
                                 _selectedWeapon = system;
                                 _selectedSystems.Add(index);
                                 image.color = Color.yellow;
+                                _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform,
+                                    _selectedWeapon.ShortRange, 0.1f, 0, Mathf.PI * 2, 64, Color.white));
+                                _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform,
+                                    _selectedWeapon.MediumRange, 0.1f, 0, Mathf.PI * 2, 64, Color.white));
+                                _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform,
+                                    _selectedWeapon.LongRange, 0.1f, 0, Mathf.PI * 2, 64, Color.white));
                             }
                             else
                             {
@@ -146,7 +156,13 @@ namespace Logic.Gameplay.Rules.GamePhases
                                 {
                                     _selectedSystems.Remove(index);
                                     image.color = Color.white;
-                                    if (_selectedSystems.Count == 0) _selectedWeapon = null;
+                                    if (_selectedSystems.Count == 0)
+                                    {
+                                        _selectedWeapon = null;
+                                        _gameplayHandler.ClearArcs();
+                                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform, 7, 0.5f, 0,
+                                            Mathf.PI * 2, 64, Color.red));
+                                    }
                                 }
                                 else
                                 {
@@ -171,8 +187,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                 },
                 selectedShip =>
                 {
-                    _gameplayHandler.LowerBar.transform.DestroyAllChildren(obj =>
-                        obj.GetComponent<Image>() != null);
+                    _gameplayHandler.ClearSystemsDisplay();
                     _selection = null;
                     _gameplayHandler.RemoveShipFromStep(selectedShip);
                     BroadcastEndOfAction(selectedShip);
@@ -204,7 +219,8 @@ namespace Logic.Gameplay.Rules.GamePhases
                         _gameplayHandler.RemoveShipFromStep(ship);
                         _gameplayHandler.NextPlayer();
                     }
-                    else if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.action == TurnType.ActionChallenge)
+                    else if (turn.player != _gameplayHandler.Referee.PlayerUuid &&
+                             turn.action == TurnType.ActionChallenge)
                     {
                         _gameplayHandler.Referee.FlashMessage("Need to respond");
                         var firingShip = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
@@ -241,7 +257,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                 ship = ship.ShipUuid,
                 target = target.ShipUuid,
                 weapon = selectedWeapon.name,
-                damage =  selectedWeapon.Damage,
+                damage = selectedWeapon.Damage,
                 shots = selectedSystems.Count * selectedWeapon.Shots,
                 defence_modifier = modifier
             };
@@ -250,15 +266,17 @@ namespace Logic.Gameplay.Rules.GamePhases
             wwwForm.AddField("player", _gameplayHandler.Referee.PlayerUuid);
             wwwForm.AddField("turn", StringSerializationAPI.Serialize<Turn>(turn));
 
-            SimpleRequest.Post(_gameplayHandler.Referee.ServerUrl + "/game/" + _gameplayHandler.Referee.GameUuid + "/turn", wwwForm,
+            SimpleRequest.Post(
+                _gameplayHandler.Referee.ServerUrl + "/game/" + _gameplayHandler.Referee.GameUuid + "/turn", wwwForm,
                 www =>
                 {
                     var response = GameResponse.FromJson(www.downloadHandler.text);
                     _gameplayHandler.Referee.LastObservedInstruction = response.turns.Count;
                     _gameplayHandler.Referee.SetGameState(response);
                 },
-                www => _gameplayHandler.Referee.FlashMessage("There was a server error (" + www.responseCode + ") creating a game\n" +
-                                                            www.error),
+                www => _gameplayHandler.Referee.FlashMessage("There was a server error (" + www.responseCode +
+                                                             ") creating a game\n" +
+                                                             www.error),
                 www => _gameplayHandler.Referee.FlashMessage("There was a network error creating a game\n" + www.error)
             );
         }
@@ -276,15 +294,17 @@ namespace Logic.Gameplay.Rules.GamePhases
             wwwForm.AddField("player", _gameplayHandler.Referee.PlayerUuid);
             wwwForm.AddField("turn", StringSerializationAPI.Serialize<Turn>(turn));
 
-            SimpleRequest.Post(_gameplayHandler.Referee.ServerUrl + "/game/" + _gameplayHandler.Referee.GameUuid + "/turn", wwwForm,
+            SimpleRequest.Post(
+                _gameplayHandler.Referee.ServerUrl + "/game/" + _gameplayHandler.Referee.GameUuid + "/turn", wwwForm,
                 www =>
                 {
                     var response = GameResponse.FromJson(www.downloadHandler.text);
                     _gameplayHandler.Referee.LastObservedInstruction = response.turns.Count;
                     _gameplayHandler.Referee.SetGameState(response);
                 },
-                www => _gameplayHandler.Referee.FlashMessage("There was a server error (" + www.responseCode + ") creating a game\n" +
-                                                            www.error),
+                www => _gameplayHandler.Referee.FlashMessage("There was a server error (" + www.responseCode +
+                                                             ") creating a game\n" +
+                                                             www.error),
                 www => _gameplayHandler.Referee.FlashMessage("There was a network error creating a game\n" + www.error)
             );
         }
