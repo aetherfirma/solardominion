@@ -29,162 +29,172 @@ namespace Logic.Gameplay.Rules.GamePhases
             GameResponse state;
             if (_gameplayHandler.UpdateStateAndUpdateInitiative(out state)) return;
 
-            if (_gameplayHandler.CurrentPlayer.Number != _gameplayHandler.Referee.LocalPlayer)
+            if (_gameplayHandler.CurrentPlayer.Number != _gameplayHandler.Referee.LocalPlayer) NetworkPlayer(state);
+            else LocalPlayer(state);
+        }
+
+        private void LocalPlayer(GameResponse state)
+        {
+            _gameplayHandler.Referee.DisplayUpperText("");
+
+            if (_selection == null)
             {
-                _gameplayHandler.Referee.DisplayUpperText(string.Format("Waiting for {0:} to play", _gameplayHandler.CurrentPlayer.Faction));
+                _gameplayHandler.CircleSelectableShips();
 
-                if (_gameplayHandler.Referee.LastObservedInstruction < state.turns.Count)
+                if (Input.GetMouseButtonUp(0) && _gameplayHandler.Referee.MouseSelection)
                 {
-                    for (var i = _gameplayHandler.Referee.LastObservedInstruction; i < state.turns.Count; i++)
+                    var ship = _gameplayHandler.Referee.MouseSelection.GetComponent<Ship>();
+                    if (ship != null && _gameplayHandler.IsShipSelectable(ship))
                     {
-                        var turn = state.turns[i];
-                        if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.action == TurnType.ActionEnd)
-                        {
-                            var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
-                            _gameplayHandler.Referee.FlashMessage(string.Format("Turn over for {0:}", ship.Name()));
+                        _gameplayHandler.ClearArcs();
+                        _selection = ship;
+                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
+                        _gameplayHandler.DrawSystemsDisplay(
+                            ship,
+                            (index, system, subsystem) =>
+                                system.Type == SystemType.Weapon || system.Type == SystemType.Hangar ||
+                                (system.Type == SystemType.Composite &&
+                                 (system.SubSystems[subsystem].Type == SystemType.Weapon ||
+                                  system.SubSystems[subsystem].Type == SystemType.Hangar)),
+                            (index, system, subsystem, image) =>
+                            {
+                                if (system.Type == SystemType.Composite) system = system.SubSystems[subsystem];
 
-                            // Obey Action
+                                switch (system.Type)
+                                {
+                                    case SystemType.Weapon:
+                                        if (_selectedWeapon == null)
+                                        {
+                                            _selectedWeapon = system;
+                                            _selectedSystems.Add(index);
+                                            image.color = Color.yellow;
+                                        }
+                                        else
+                                        {
+                                            if (_selectedSystems.Contains(index))
+                                            {
+                                                _selectedSystems.Remove(index);
+                                                image.color = Color.white;
+                                                if (_selectedSystems.Count == 0) _selectedWeapon = null;
+                                            }
+                                            else
+                                            {
+                                                if (_selectedWeapon == system)
+                                                {
+                                                    image.color = Color.yellow;
+                                                    _selectedSystems.Add(index);
+                                                }
+                                                else
+                                                {
+                                                    _gameplayHandler.Referee.FlashMessage(
+                                                        "Cannot combine different weapon types", 10);
+                                                }
+                                            }
+                                        }
 
-                            _gameplayHandler.RemoveShipFromStep(ship);
-                            _gameplayHandler.NextPlayer();
-                        } 
-                        else if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.action == TurnType.ActionChallenge)
-                        {
-                            _gameplayHandler.Referee.FlashMessage("Need to respond");
-                            var firingShip = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
-                            var targetShip = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
-                            
-                        }
+                                        break;
+                                    case SystemType.Hangar:
+                                        _gameplayHandler.Referee.FlashMessage("Would deploy a ship");
+                                        break;
+                                }
+                            },
+                            selectedShip =>
+                            {
+                                _gameplayHandler.LowerBar.transform.DestroyAllChildren(obj =>
+                                    obj.GetComponent<Image>() != null);
+                                _selection = null;
+                                _gameplayHandler.RemoveShipFromStep(selectedShip);
+                                BroadcastEndOfAction(selectedShip);
+                                _gameplayHandler.ClearArcs();
+                                _gameplayHandler.LowerBar.transform.Find("Text").GetComponent<Text>().text = "";
 
-                        _gameplayHandler.Referee.LastObservedInstruction = i + 1;
+                                _gameplayHandler.NextPlayer();
+                            }
+                        );
                     }
                 }
             }
             else
             {
-                _gameplayHandler.Referee.DisplayUpperText("");
-
-                if (_selection == null)
+                if (_target)
                 {
-                    _gameplayHandler.CircleSelectableShips();
+                    _gameplayHandler.Referee.DisplayUpperText(String.Format("Waiting for {0:} to respond",
+                        _target.Player.Faction));
 
-                    if (Input.GetMouseButtonUp(0) && _gameplayHandler.Referee.MouseSelection)
+                    if (_gameplayHandler.Referee.LastObservedInstruction < state.turns.Count)
                     {
-                        var ship = _gameplayHandler.Referee.MouseSelection.GetComponent<Ship>();
-                        if (ship != null && _gameplayHandler.IsShipSelectable(ship))
+                        for (var i = _gameplayHandler.Referee.LastObservedInstruction; i < state.turns.Count; i++)
                         {
-                            _gameplayHandler.ClearArcs();
-                            _selection = ship;
-                            _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
-                            _gameplayHandler.DrawSystemsDisplay(
-                                ship,
-                                (index, system, subsystem) =>
-                                    system.Type == SystemType.Weapon || system.Type == SystemType.Hangar ||
-                                    (system.Type == SystemType.Composite &&
-                                     (system.SubSystems[subsystem].Type == SystemType.Weapon ||
-                                      system.SubSystems[subsystem].Type == SystemType.Hangar)),
-                                (index, system, subsystem, image) =>
-                                {
-                                    if (system.Type == SystemType.Composite) system = system.SubSystems[subsystem];
-                                    
-                                    switch (system.Type)
-                                    {
-                                        case SystemType.Weapon:
-                                            if (_selectedWeapon == null)
-                                            {
-                                                _selectedWeapon = system;
-                                                _selectedSystems.Add(index);
-                                                image.color = Color.yellow;
-                                            }
-                                            else
-                                            {
-                                                if (_selectedSystems.Contains(index))
-                                                {
-                                                    _selectedSystems.Remove(index);
-                                                    image.color = Color.white;
-                                                    if (_selectedSystems.Count == 0) _selectedWeapon = null;
-                                                }
-                                                else
-                                                {
-                                                    if (_selectedWeapon == system)
-                                                    {
-                                                        image.color = Color.yellow;
-                                                        _selectedSystems.Add(index);
-                                                    }
-                                                    else
-                                                    {
-                                                        _gameplayHandler.Referee.FlashMessage("Cannot combine different weapon types", 10);
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        case SystemType.Hangar:
-                                            _gameplayHandler.Referee.FlashMessage("Would deploy a ship");
-                                            break;
-                                    }
-                                },
-                                selectedShip =>
-                                {
-                                    _gameplayHandler.LowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
-                                    _selection = null;
-                                    _gameplayHandler.RemoveShipFromStep(selectedShip);
-                                    BroadcastEndOfAction(selectedShip);
-                                    _gameplayHandler.ClearArcs();
-                                    _gameplayHandler.LowerBar.transform.Find("Text").GetComponent<Text>().text = "";
+                            var turn = state.turns[i];
+                            if (turn.action == TurnType.ActionResponse)
+                            {
+                                var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                                _gameplayHandler.Referee.FlashMessage(
+                                    String.Format("Just recieved reply for {0:}", ship.Name()));
+                                _gameplayHandler.Referee.DisplayUpperText("");
 
-                                    _gameplayHandler.NextPlayer();
-                                }
-                            );
+                                // Obey Action
+
+                                _gameplayHandler.RemoveShipFromStep(ship);
+                            }
+
+                            _gameplayHandler.Referee.LastObservedInstruction = i + 1;
+                            _gameplayHandler.NextPlayer();
                         }
                     }
                 }
-                else
+                else if (Input.GetMouseButtonUp(0) && _gameplayHandler.Referee.MouseSelection && _selectedWeapon != null)
                 {
-                    if (_target)
+                    var ship = _gameplayHandler.Referee.MouseSelection.GetComponent<Ship>();
+                    if (ship != null && ship.Player != _gameplayHandler.CurrentPlayer)
                     {
-                        _gameplayHandler.Referee.DisplayUpperText(String.Format("Waiting for {0:} to respond", _target.Player.Faction));
-                        
-                        if (_gameplayHandler.Referee.LastObservedInstruction < state.turns.Count)
+                        if (IsInRange(_selection, _selectedWeapon, ship))
                         {
-                            for (var i = _gameplayHandler.Referee.LastObservedInstruction; i < state.turns.Count; i++)
-                            {
-                                var turn = state.turns[i];
-                                if (turn.action == TurnType.ActionResponse)
-                                {
-                                    var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
-                                    _gameplayHandler.Referee.FlashMessage(String.Format("Just recieved reply for {0:}", ship.Name()));
-                                    _gameplayHandler.Referee.DisplayUpperText("");
-
-                                    // Obey Action
-
-                                    _gameplayHandler.RemoveShipFromStep(ship);
-                                }
-
-                                _gameplayHandler.Referee.LastObservedInstruction = i + 1;
-                                _gameplayHandler.NextPlayer();
-                            }
+                            _target = ship;
+                            _gameplayHandler.LowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
+                            _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64,
+                                Color.red));
+                            BroadcastWeaponFiring(_selection, _selectedWeapon, _selectedSystems, _target);
+                            _gameplayHandler.Referee.DisplayUpperText("Waiting on response");
                         }
-
-                    }
-                    else if (Input.GetMouseButtonUp(0) && _gameplayHandler.Referee.MouseSelection && _selectedWeapon != null)
-                    {
-                        var ship = _gameplayHandler.Referee.MouseSelection.GetComponent<Ship>();
-                        if (ship != null && ship.Player != _gameplayHandler.CurrentPlayer)
+                        else
                         {
-                            if (IsInRange(_selection, _selectedWeapon, ship))
-                            {
-                                _target = ship;
-                                _gameplayHandler.LowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
-                                _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
-                                BroadcastWeaponFiring(_selection, _selectedWeapon, _selectedSystems, _target);
-                                _gameplayHandler.Referee.DisplayUpperText("Waiting on response");
-                            }
-                            else
-                            {
-                                _gameplayHandler.Referee.FlashMessage(String.Format("Cannot fire {0:} at {1:}, out of range.", _selectedWeapon.name, ship.Name()));
-                            }
+                            _gameplayHandler.Referee.FlashMessage(String.Format("Cannot fire {0:} at {1:}, out of range.",
+                                _selectedWeapon.name, ship.Name()));
                         }
                     }
+                }
+            }
+        }
+
+        private void NetworkPlayer(GameResponse state)
+        {
+            _gameplayHandler.Referee.DisplayUpperText(string.Format("Waiting for {0:} to play",
+                _gameplayHandler.CurrentPlayer.Faction));
+
+            if (_gameplayHandler.Referee.LastObservedInstruction < state.turns.Count)
+            {
+                for (var i = _gameplayHandler.Referee.LastObservedInstruction; i < state.turns.Count; i++)
+                {
+                    var turn = state.turns[i];
+                    if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.action == TurnType.ActionEnd)
+                    {
+                        var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                        _gameplayHandler.Referee.FlashMessage(string.Format("Turn over for {0:}", ship.Name()));
+
+                        // Obey Action
+
+                        _gameplayHandler.RemoveShipFromStep(ship);
+                        _gameplayHandler.NextPlayer();
+                    }
+                    else if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.action == TurnType.ActionChallenge)
+                    {
+                        _gameplayHandler.Referee.FlashMessage("Need to respond");
+                        var firingShip = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                        var targetShip = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                    }
+
+                    _gameplayHandler.Referee.LastObservedInstruction = i + 1;
                 }
             }
         }
