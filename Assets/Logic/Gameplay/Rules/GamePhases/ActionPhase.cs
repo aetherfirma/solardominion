@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Logic.Display;
 using Logic.Gameplay.Ships;
+using Logic.Maths;
 using Logic.Network;
 using Logic.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace Logic.Gameplay.Rules.GamePhases
 {
@@ -106,14 +108,35 @@ namespace Logic.Gameplay.Rules.GamePhases
                     var turn = state.turns[i];
                     if (turn.action == TurnType.ActionResponse)
                     {
-                        var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                        var firingShip = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                        var targetShip = _gameplayHandler.Referee.Players.Single(p => p.Uuid == turn.target_player).Fleet.Single(s => s.ShipUuid == turn.target);
+                        
                         _gameplayHandler.Referee.FlashMessage(
-                            String.Format("Just recieved reply for {0:}", ship.Name()));
+                            string.Format("Just recieved reply for {0:}", firingShip.Name()));
                         _gameplayHandler.Referee.DisplayUpperText("");
 
-                        // Obey Action
+                        targetShip.ThrustRemaining -= turn.thrust;
 
-                        _gameplayHandler.RemoveShipFromStep(ship);
+                        var shots = _selectedWeapon.Shots * _selectedSystems.Count;
+                        var damage = _selectedWeapon.Damage;
+                        var defenderPool = (1 + turn.thrust) *
+                                           (GetRangeModifier(firingShip, _selectedWeapon, targetShip) +
+                                            targetShip.CalculateDefensiveModifier());
+
+                        _selectedWeapon = null;
+                        foreach (var system in _selectedSystems)
+                        {
+                            firingShip.Used[system] = true;
+                        }
+                        _selectedSystems.Clear();
+
+                        ResolveAttack(firingShip, shots, damage, targetShip, defenderPool);
+
+                        _target = null;
+                        _gameplayHandler.ClearArcs();
+                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform, 7, 0.5f, 0, Mathf.PI * 2, 64,
+                            Color.red));
+                        DrawActionSystemsDisplay(firingShip);
                     }
 
                     _gameplayHandler.Referee.LastObservedInstruction = i + 1;
@@ -214,21 +237,78 @@ namespace Logic.Gameplay.Rules.GamePhases
                         var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
                         _gameplayHandler.Referee.FlashMessage(string.Format("Turn over for {0:}", ship.Name()));
 
-                        // Obey Action
-
                         _gameplayHandler.RemoveShipFromStep(ship);
                         _gameplayHandler.NextPlayer();
                     }
-                    else if (turn.player != _gameplayHandler.Referee.PlayerUuid &&
+                    else if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.target_player == _gameplayHandler.Referee.PlayerUuid &&
                              turn.action == TurnType.ActionChallenge)
                     {
-                        _gameplayHandler.Referee.FlashMessage("Need to respond");
+                        _gameplayHandler.Referee.DisplayUpperText(string.Format("Being fired at by {0:} {1:} shot{2:}", turn.weapon, turn.shots, turn.shots == 1 ? "" : "s"));
                         var firingShip = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
-                        var targetShip = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
+                        var targetShip = _gameplayHandler.Referee.Players.Single(p => p.Uuid == turn.target_player).Fleet.Single(s => s.ShipUuid == turn.target);
+                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(firingShip.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
+                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(targetShip.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
+
+                        var thrustToSpend = 0;
+
+                        var turnDefenceModifier = turn.defence_modifier + targetShip.CalculateDefensiveModifier();
+                        var defenceIndicator = _gameplayHandler.CreateText(_gameplayHandler.LowerBar, new Vector2(90, 45),
+                            string.Format("{0:} x (1 + 0/{1:}) = {0:}", turnDefenceModifier, targetShip.ThrustRemaining));
+
+                        _gameplayHandler.CreateButton(new Vector2(95, 0), new Vector2(45, 45), "+",
+                            () =>
+                            {
+                                if (thrustToSpend >= targetShip.ThrustRemaining) return;
+                                thrustToSpend++;
+                                defenceIndicator.GetComponent<Text>().text =  string.Format("{0:} x (1 + {1:}/{2:}) = {3:}", 
+                                    turnDefenceModifier, thrustToSpend, targetShip.ThrustRemaining, turnDefenceModifier * (1 + thrustToSpend));
+                            });
+                        _gameplayHandler.CreateButton(new Vector2(-95, 0), new Vector2(45, 45), "-",
+                            () => {
+                                if (thrustToSpend <= 0) return;
+                                thrustToSpend--;
+                                defenceIndicator.GetComponent<Text>().text =  string.Format("{0:} x (1 + {1:}/{2:}) = {3:}", 
+                                    turnDefenceModifier, thrustToSpend, targetShip.ThrustRemaining, turnDefenceModifier * (1 + thrustToSpend));
+                            });
+
+                        _gameplayHandler.CreateButton(new Vector2(0, -55), new Vector2(135, 35),
+                            "Commit Defence",
+                            () =>
+                            {
+                                Object.Destroy(defenceIndicator);
+                                _gameplayHandler.ClearSystemsDisplay();
+                                BroadcastWeaponDefence(firingShip, thrustToSpend, targetShip);
+                                targetShip.ThrustRemaining -= thrustToSpend;
+
+                                var shots = turn.shots;
+                                var damage = turn.damage;
+                                var defenderPool = turnDefenceModifier * (1 + thrustToSpend);
+
+                                ResolveAttack(firingShip, shots, damage, targetShip, defenderPool);
+                                _gameplayHandler.ClearArcs();
+                            });
+
                     }
 
                     _gameplayHandler.Referee.LastObservedInstruction = i + 1;
                 }
+            }
+        }
+
+        private void ResolveAttack(Ship firingShip, int shots, int damage, Ship targetShip, int defenderPool)
+        {
+            var attackerDice = _gameplayHandler.Referee.Rng.D6(shots).Successes(firingShip.Training);
+            var defenderDice = _gameplayHandler.Referee.Rng.D6(defenderPool).Successes(targetShip.Training);
+            var result = attackerDice - defenderDice;
+            if (result > 0)
+            {
+                targetShip.TakeDamage(_gameplayHandler.Referee.Rng, result * damage);
+                _gameplayHandler.Referee.FlashMessage(string.Format("{0:} has taken {1:} damage{2:}", targetShip.Name(), result * damage,
+                    targetShip.Alive ? "" : " and was destroyed"));
+            }
+            else
+            {
+                _gameplayHandler.Referee.FlashMessage(string.Format("{0:} has taken no damage", targetShip.Name()));
             }
         }
 
@@ -255,11 +335,43 @@ namespace Logic.Gameplay.Rules.GamePhases
                 action = TurnType.ActionChallenge,
                 player = ship.Player.Uuid,
                 ship = ship.ShipUuid,
+                target_player = target.Player.Uuid,
                 target = target.ShipUuid,
                 weapon = selectedWeapon.name,
                 damage = selectedWeapon.Damage,
                 shots = selectedSystems.Count * selectedWeapon.Shots,
                 defence_modifier = modifier
+            };
+
+            var wwwForm = new WWWForm();
+            wwwForm.AddField("player", _gameplayHandler.Referee.PlayerUuid);
+            wwwForm.AddField("turn", StringSerializationAPI.Serialize<Turn>(turn));
+
+            SimpleRequest.Post(
+                _gameplayHandler.Referee.ServerUrl + "/game/" + _gameplayHandler.Referee.GameUuid + "/turn", wwwForm,
+                www =>
+                {
+                    var response = GameResponse.FromJson(www.downloadHandler.text);
+                    _gameplayHandler.Referee.LastObservedInstruction = response.turns.Count;
+                    _gameplayHandler.Referee.SetGameState(response);
+                },
+                www => _gameplayHandler.Referee.FlashMessage("There was a server error (" + www.responseCode +
+                                                             ") creating a game\n" +
+                                                             www.error),
+                www => _gameplayHandler.Referee.FlashMessage("There was a network error creating a game\n" + www.error)
+            );
+        }
+
+        private void BroadcastWeaponDefence(Ship ship, int defensiveThrust, Ship target)
+        {
+            var turn = new Turn
+            {
+                action = TurnType.ActionResponse,
+                player = ship.Player.Uuid,
+                ship = ship.ShipUuid,
+                target_player = target.Player.Uuid,
+                target = target.ShipUuid,
+                thrust = defensiveThrust
             };
 
             var wwwForm = new WWWForm();

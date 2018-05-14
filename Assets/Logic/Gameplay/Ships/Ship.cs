@@ -118,8 +118,8 @@ namespace Logic.Gameplay.Ships
         public string Describe()
         {
             return string.Format(
-                "{0:} - {1:}\nTraining {2:} - Initative {3:}\nSpeed {4:} - {5:} Thrust remaining",
-                Name(), Class, Training, Initiative, Speed, ThrustRemaining
+                "{0:} - {1:}\nTraining {2:} - Initative {3:}\nSpeed {4:} - {5:} Thrust remaining\n{6:} damage taken",
+                Name(), Class, Training, Initiative, Speed, ThrustRemaining, Damage.Count(d => d)
             );
         }
 
@@ -176,6 +176,17 @@ namespace Logic.Gameplay.Ships
         public ShipJson ToSerializable()
         {
             return new ShipJson(UUID, Training, ShipUuid);
+        }
+
+        public void TakeDamage(WellRng rng, int result)
+        {
+            while (result > 0 && Alive)
+            {
+                var systemToDamage =
+                    Damage.Select((damaged, index) => damaged ? -1 : index).Where(i => i >= 0).Random(rng);
+                Damage[systemToDamage] = true;
+                result--;
+            }
         }
     }
 }

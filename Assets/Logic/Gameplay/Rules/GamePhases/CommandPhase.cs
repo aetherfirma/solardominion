@@ -83,7 +83,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                                     {
                                         case SystemType.Composite:
                                             ship.Subsystem[index] =
-                                                (subsystem + 1) % system.SubSystems.Length;
+                                                (ship.Subsystem[index] + 1) % system.SubSystems.Length;
                                             _gameplayHandler.Referee.FlashMessage(string.Format("Set {0:} to {1:}", system.name,
                                                 system.SubSystems[ship.Subsystem[index]].name));
                                             var texture2D = system.SubSystems[ship.Subsystem[index]].Icon;

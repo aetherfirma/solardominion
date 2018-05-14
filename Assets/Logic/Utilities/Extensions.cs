@@ -77,6 +77,11 @@ namespace Logic.Utilities
             gameObject.transform.localRotation = Quaternion.identity;
             gameObject.transform.localScale = new Vector3(1, 1, 1);
         }
+
+        public static int Successes(this int[] rolls, int training)
+        {
+            return rolls.Count(r => r >= training);
+        }
     }
 
     public class DictionaryWithDefault<TKey, TValue> : Dictionary<TKey, TValue>

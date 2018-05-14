@@ -28,6 +28,7 @@ namespace Logic.Network
         public string player;
         public TurnType action;
         public string ship;
+        public string target_player;
         public string target;
         public float[] location;
         public float rotation;
@@ -38,6 +39,7 @@ namespace Logic.Network
         public int shots;
         public int damage;
         public string weapon;
+        public int thrust;
     }
 
     public enum TurnType
