@@ -65,6 +65,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4273644295618250}
   - component: {fileID: 114708908599332864}
+  - component: {fileID: 65256721373286022}
   m_Layer: 0
   m_Name: ip3 frigate
   m_TagString: Untagged
@@ -72,16 +73,16 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &1459318368087418
+--- !u!1 &1806543215674732
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 5
   m_Component:
-  - component: {fileID: 4729737960208866}
-  - component: {fileID: 33615757902603310}
-  - component: {fileID: 23461132469971088}
+  - component: {fileID: 4672143598084700}
+  - component: {fileID: 33466163436645144}
+  - component: {fileID: 23959324348660750}
   m_Layer: 0
   m_Name: default
   m_TagString: Untagged
@@ -124,10 +125,10 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1090209133597180}
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5.1512475, y: 6.1803474, z: -6.361291}
+  m_LocalPosition: {x: -11.37, y: 22.52, z: -18.95}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 4729737960208866}
+  - {fileID: 4672143598084700}
   - {fileID: 4008885541666666}
   - {fileID: 4719119428031774}
   - {fileID: 4603392377875984}
@@ -148,6 +149,19 @@ Transform:
   m_Father: {fileID: 4273644295618250}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -90}
+--- !u!4 &4672143598084700
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1806543215674732}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 4273644295618250}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &4719119428031774
 Transform:
   m_ObjectHideFlags: 1
@@ -161,19 +175,6 @@ Transform:
   m_Father: {fileID: 4273644295618250}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
---- !u!4 &4729737960208866
-Transform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1459318368087418}
-  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 4273644295618250}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &4772188649305262
 Transform:
   m_ObjectHideFlags: 1
@@ -187,12 +188,12 @@ Transform:
   m_Father: {fileID: 4273644295618250}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
---- !u!23 &23461132469971088
+--- !u!23 &23959324348660750
 MeshRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1459318368087418}
+  m_GameObject: {fileID: 1806543215674732}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -201,7 +202,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: 3c4ae820240f301499854f90768a6e51, type: 3}
+  - {fileID: 2100000, guid: dd74e174405fcc34785d311d95eafafc, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -221,13 +222,25 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!33 &33615757902603310
+--- !u!33 &33466163436645144
 MeshFilter:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1459318368087418}
-  m_Mesh: {fileID: 4300000, guid: 3c4ae820240f301499854f90768a6e51, type: 3}
+  m_GameObject: {fileID: 1806543215674732}
+  m_Mesh: {fileID: 4300000, guid: 44a789d836f761b44abfa4fa6b67f750, type: 3}
+--- !u!65 &65256721373286022
+BoxCollider:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1090209133597180}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 2.4, y: 1.81, z: 8.138902}
+  m_Center: {x: 0, y: 0, z: 0.14125872}
 --- !u!114 &114708908599332864
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -239,8 +252,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ad5e6637dd14f918045ad02ce576a17, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Weapons:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  Systems: []
+  UUID: 
+  Faction: 1
+  ShipUuid: 
+  Damage: 
+  Used: 
+  Subsystem: 
+  Speed: 0
+  Training: 0
+  Initiative: 0
+  UnderOrders: 0
+  Fleeing: 0
+  Fled: 0
+  Order: 0
+  Deployed: 0
+  ThrustRemaining: 0
+  MinimumTraining: 0
+  MaximumTraining: 0

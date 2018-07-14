@@ -11,7 +11,7 @@ namespace Logic.Gameplay.Ships
         public int Defence;
         public int Shots, Damage, ShortRange, ShortModifier, MediumRange, MediumModifier, LongRange, LongModifier;
         public Order[] Orders;
-        public GameObject Model;
+        public GameObject[] Model;
         public bool Displayed;
         public Texture2D[] CardImages;
         public Texture2D Icon;

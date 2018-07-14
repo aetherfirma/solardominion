@@ -324,12 +324,19 @@ MonoBehaviour:
   - {fileID: 114400465259707146, guid: 1d3cfc5742b2b4a44a19cd4291373e00, type: 2}
   - {fileID: 114400465259707146, guid: 1d3cfc5742b2b4a44a19cd4291373e00, type: 2}
   UUID: 9b383a8f-7f58-4d51-b0a4-6418dc58b2fe
+  Faction: 1
+  ShipUuid: 
   Damage: 
+  Used: 
+  Subsystem: 
   Speed: 0
   Training: 0
   Initiative: 0
   UnderOrders: 0
+  Fleeing: 0
+  Fled: 0
   Order: 0
   Deployed: 0
+  ThrustRemaining: 0
   MinimumTraining: 4
   MaximumTraining: 5

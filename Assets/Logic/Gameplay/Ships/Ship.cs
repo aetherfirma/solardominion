@@ -12,6 +12,7 @@ namespace Logic.Gameplay.Ships
         public ShipSystem[] Systems;
         public string UUID;
         public Player Player;
+        public Faction Faction;
         public string ShipUuid;
         public bool[] Damage;
         public bool[] Used;
@@ -97,7 +98,7 @@ namespace Logic.Gameplay.Ships
 
                 if (systemSearch < Systems.Length && Systems[systemSearch].Displayed)
                 {
-                    Instantiate(Systems[systemSearch].Model, hardpoint.transform);
+                    Instantiate(Systems[systemSearch].Model[(int) Faction], hardpoint.transform);
                     systemSearch++;
                 }
             }

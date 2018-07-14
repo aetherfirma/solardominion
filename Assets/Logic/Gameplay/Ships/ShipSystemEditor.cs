@@ -75,7 +75,7 @@ namespace Logic.Gameplay.Ships
             EditorGUILayout.PropertyField(Icon);
             EditorGUILayout.PropertyField(Cost, true);
             EditorGUILayout.PropertyField(Displayed);
-            if (Displayed.boolValue) EditorGUILayout.PropertyField(Model);
+            if (Displayed.boolValue) EditorGUILayout.PropertyField(Model, true);
             serializedObject.ApplyModifiedProperties();
         }
     }

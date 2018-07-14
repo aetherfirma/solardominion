@@ -64,7 +64,9 @@ MonoBehaviour:
   LongRange: 50
   LongModifier: 5
   Orders: 
-  Model: {fileID: 100002, guid: 6508561f83f0dbd41a5f870a93d984a6, type: 3}
+  Model:
+  - {fileID: 1458057181972046, guid: 64e4d2eec846bb0448fc1dfb110fe4b4, type: 2}
+  - {fileID: 1458057181972046, guid: 64e4d2eec846bb0448fc1dfb110fe4b4, type: 2}
   Displayed: 1
   CardImages:
   - {fileID: 2800000, guid: 48093fba35cc1764dba92aa2f0680428, type: 3}

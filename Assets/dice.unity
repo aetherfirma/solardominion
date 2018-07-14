@@ -533,8 +533,6 @@ MonoBehaviour:
     - {fileID: 114527707238938298, guid: 8a815baa35238574aa6b4e380bf63108, type: 2}
     - {fileID: 114928130184144576, guid: e2c46fc8b48f1c04aac649e60bf40cbb, type: 2}
     - {fileID: 114887513708276664, guid: 3725a0c3efde1a344a0f740fc1a9c93e, type: 2}
-    - {fileID: 114179494980259078, guid: f15055c3b13bf4246bb7274d0d26b80d, type: 2}
-    - {fileID: 114316370024417580, guid: 11626430a1ffed7499de3a46bab55224, type: 2}
   Phase: 0
   CurrentPlayer: 0
   LocalPlayer: 0
