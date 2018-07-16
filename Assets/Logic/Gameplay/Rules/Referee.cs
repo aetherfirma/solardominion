@@ -10,11 +10,14 @@ using Logic.Ui;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 namespace Logic.Gameplay.Rules
 {
     public class Referee : MonoBehaviour
     {
+        public Material[] Skyboxes;
+        public GameObject Explosion;
         public Camera Camera;
         public RectTransform UiCanvas;
         public ShipArray[] Ships;
@@ -106,6 +109,8 @@ namespace Logic.Gameplay.Rules
             _gameplayHandler = new GameplayHandler(this);
 
             FindUiElements();
+
+            RenderSettings.skybox = Skyboxes[Random.Range(0, Skyboxes.Length)];
         }
 
         public void UpdateMouseLocationAndSelection()

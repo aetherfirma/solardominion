@@ -65,7 +65,7 @@ MonoBehaviour:
   LongModifier: 5
   Orders: 00000000010000000200000003000000
   Model:
-  - {fileID: 1021880648692204, guid: 6f55671ed6d0e8c4ebf2faf1bcfe289a, type: 2}
+  - {fileID: 1021880648692204, guid: 2c4119db011e6fe49a722a26cab1c0d4, type: 2}
   - {fileID: 1021880648692204, guid: 6f55671ed6d0e8c4ebf2faf1bcfe289a, type: 2}
   Displayed: 1
   CardImages:

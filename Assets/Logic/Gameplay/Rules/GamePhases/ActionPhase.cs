@@ -305,6 +305,9 @@ namespace Logic.Gameplay.Rules.GamePhases
                 targetShip.TakeDamage(_gameplayHandler.Referee.Rng, result * damage);
                 _gameplayHandler.Referee.FlashMessage(string.Format("{0:} has taken {1:} damage{2:}", targetShip.Name(), result * damage,
                     targetShip.Alive ? "" : " and was destroyed"));
+                Object.Instantiate(_gameplayHandler.Referee.Explosion, targetShip.transform.position,
+                    Quaternion.identity);
+                Object.Destroy(targetShip.gameObject);
             }
             else
             {
