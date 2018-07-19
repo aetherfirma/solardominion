@@ -38,6 +38,13 @@ namespace Logic.Gameplay.Rules
             _commandPhase = new CommandPhase(this);
         }
 
+        public void DestroyShip(Ship ship)
+        {
+            if (ship.Initiative == _currentInitiativeStep) RemoveShipFromCurrentStep(ship);
+            Object.Instantiate(Referee.ShipDestroyedExplosion, ship.transform.position, Quaternion.identity);
+            ship.gameObject.SetActive(false);
+        }
+
         private Dictionary<Player, List<Ship>> DetermineShipsThatCanAct()
         {
             var playersAndShips = new DictionaryWithDefault<Player, List<Ship>>(() => new List<Ship>());
@@ -53,7 +60,7 @@ namespace Logic.Gameplay.Rules
             return playersAndShips;
         }
 
-        public void RemoveShipFromStep(Ship ship)
+        public void RemoveShipFromCurrentStep(Ship ship)
         {
             ShipsInInitiativeStep[ship.Player].Remove(ship);
             if (ShipsInInitiativeStep[ship.Player].Count == 0) ShipsInInitiativeStep.Remove(ship.Player);
@@ -84,6 +91,8 @@ namespace Logic.Gameplay.Rules
                 return;
             }
 
+            // TODO: Swap out for player who acted least recently
+            
             var playersWithFewestShips = new HashSet<Player>();
             var noShips = Int32.MaxValue;
             foreach (var player in ShipsInInitiativeStep.Keys)
@@ -161,6 +170,7 @@ namespace Logic.Gameplay.Rules
                     _actionPhase.Update();
                     break;
                 case TurnPhase.Cleanup:
+                    IncrementPhase();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

@@ -49,7 +49,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                             }
 
                             ship.CalculateThrust();
-                            _gameplayHandler.RemoveShipFromStep(ship);
+                            _gameplayHandler.RemoveShipFromCurrentStep(ship);
                         }
 
                         _gameplayHandler.Referee.LastObservedInstruction = i + 1;
@@ -99,7 +99,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                                 selectedShip =>
                                 {
                                     if (selectedShip.Systems.Where((t, i) =>
-                                        t.Type == SystemType.Composite && selectedShip.Subsystem[i] == -1).Any())
+                                        t.Type == SystemType.Composite && selectedShip.Damage[i] && selectedShip.Subsystem[i] == -1).Any())
                                     {
                                         _gameplayHandler.Referee.FlashMessage(
                                             "All composite systems must be set to one of their options");
@@ -109,7 +109,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                                     _gameplayHandler.ClearSystemsDisplay();
                                     _selection = null;
                                     selectedShip.CalculateThrust();
-                                    _gameplayHandler.RemoveShipFromStep(selectedShip);
+                                    _gameplayHandler.RemoveShipFromCurrentStep(selectedShip);
                                     BroadcastShipCommandState(selectedShip);
                                     _gameplayHandler.ClearArcs();
 

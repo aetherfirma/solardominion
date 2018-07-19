@@ -54,7 +54,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                             ship.transform.position = newPosition;
                             ship.transform.rotation = Quaternion.LookRotation(movementDelta);
 
-                            _gameplayHandler.RemoveShipFromStep(ship);
+                            _gameplayHandler.RemoveShipFromCurrentStep(ship);
                         }
 
                         _gameplayHandler.Referee.LastObservedInstruction = i + 1;
@@ -111,7 +111,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                         _selection.transform.position = _gameplayHandler.Referee.MouseLocation;
                         _selection.transform.rotation = Quaternion.LookRotation(movementDelta);
                         BroadcastMovement(_selection);
-                        _gameplayHandler.RemoveShipFromStep(_selection);
+                        _gameplayHandler.RemoveShipFromCurrentStep(_selection);
                         _selection = null;
                         _gameplayHandler.ClearArcs();
                         _gameplayHandler.NextPlayer();

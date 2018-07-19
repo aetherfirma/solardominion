@@ -17,7 +17,8 @@ namespace Logic.Gameplay.Rules
     public class Referee : MonoBehaviour
     {
         public Material[] Skyboxes;
-        public GameObject Explosion;
+        public GameObject ShipDestroyedExplosion;
+        public GameObject ShipHitExplosion;
         public Camera Camera;
         public RectTransform UiCanvas;
         public ShipArray[] Ships;

@@ -9,6 +9,7 @@ using Logic.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace Logic.Gameplay.Rules.GamePhases
 {
@@ -212,7 +213,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                 {
                     _gameplayHandler.ClearSystemsDisplay();
                     _selection = null;
-                    _gameplayHandler.RemoveShipFromStep(selectedShip);
+                    _gameplayHandler.RemoveShipFromCurrentStep(selectedShip);
                     BroadcastEndOfAction(selectedShip);
                     _gameplayHandler.ClearArcs();
                     _gameplayHandler.LowerBar.transform.Find("Text").GetComponent<Text>().text = "";
@@ -237,7 +238,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                         var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
                         _gameplayHandler.Referee.FlashMessage(string.Format("Turn over for {0:}", ship.Name()));
 
-                        _gameplayHandler.RemoveShipFromStep(ship);
+                        _gameplayHandler.RemoveShipFromCurrentStep(ship);
                         _gameplayHandler.NextPlayer();
                     }
                     else if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.target_player == _gameplayHandler.Referee.PlayerUuid &&
@@ -302,12 +303,22 @@ namespace Logic.Gameplay.Rules.GamePhases
             var result = attackerDice - defenderDice;
             if (result > 0)
             {
-                targetShip.TakeDamage(_gameplayHandler.Referee.Rng, result * damage);
-                _gameplayHandler.Referee.FlashMessage(string.Format("{0:} has taken {1:} damage{2:}", targetShip.Name(), result * damage,
+                var totalDamage = result * damage;
+                targetShip.TakeDamage(_gameplayHandler.Referee.Rng, totalDamage);
+                _gameplayHandler.Referee.FlashMessage(string.Format("{0:} has taken {1:} damage{2:}", targetShip.Name(), totalDamage,
                     targetShip.Alive ? "" : " and was destroyed"));
-                Object.Instantiate(_gameplayHandler.Referee.Explosion, targetShip.transform.position,
-                    Quaternion.identity);
-                Object.Destroy(targetShip.gameObject);
+                if (targetShip.Alive)
+                {
+                    for (var i = 0; i < totalDamage; i++)
+                    {
+                        Object.Instantiate(_gameplayHandler.Referee.ShipHitExplosion, targetShip.transform.position + Random.onUnitSphere,
+                            Quaternion.identity);
+                    }
+                }
+                else
+                {
+                   _gameplayHandler.DestroyShip(targetShip);
+                }
             }
             else
             {
