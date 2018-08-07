@@ -4,6 +4,8 @@ using Logic.Gameplay.Players;
 using Logic.Maths;
 using Logic.Utilities;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.UI;
 
 namespace Logic.Gameplay.Ships
 {
@@ -27,6 +29,9 @@ namespace Logic.Gameplay.Ships
         public int ThrustRemaining;
         [Range(2, 6)] public int MinimumTraining;
         [Range(2, 6)] public int MaximumTraining;
+
+        private Text _speedMarker;
+        private int _setSpeed = -1;
 
         public bool Alive
         {
@@ -87,6 +92,9 @@ namespace Logic.Gameplay.Ships
 
         private void Start()
         {
+            DisplayPentagon();
+            AddSpeedMarker();
+
             var hardpoints = gameObject.FindChildrenWithName("Hardpoint");
             var systemSearch = 0;
             foreach (var hardpoint in hardpoints)
@@ -101,6 +109,57 @@ namespace Logic.Gameplay.Ships
                     Instantiate(Systems[systemSearch].Model[(int) Faction], hardpoint.transform);
                     systemSearch++;
                 }
+            }
+        }
+
+        private void AddSpeedMarker()
+        {
+            var markerCanvas = new GameObject("Speed Marker Canvas", typeof(Canvas));
+            markerCanvas.transform.parent = transform;
+            markerCanvas.transform.localPosition = new Vector3(0,-3,-4);
+            markerCanvas.transform.localRotation = Quaternion.Euler(90,0,0);
+            markerCanvas.transform.localScale = new Vector3(.1f,.1f,.1f);
+            
+            var marker = new GameObject("Speed Marker", typeof(Text));
+            marker.transform.parent = markerCanvas.transform;
+            marker.transform.localPosition = Vector3.zero;
+            marker.transform.localRotation = Quaternion.identity;
+            marker.transform.localScale = Vector3.one;
+
+            _speedMarker = marker.GetComponent<Text>();
+            _speedMarker.supportRichText = true;
+            SetSpeedMarker(0);
+            _speedMarker.font = Font.CreateDynamicFontFromOSFont("Sansasion", 14);
+            _speedMarker.alignment = TextAnchor.MiddleCenter;
+        }
+
+        private void SetSpeedMarker(int speed)
+        {
+            if (speed == _setSpeed) return;
+            _setSpeed = speed;
+
+            if (speed == 0) _speedMarker.text = string.Format("<size=10>{0:}</size>", Name());
+            else _speedMarker.text = string.Format("<size=10>{0:}</size>\nSpeed {1:}", Name(), speed);
+        }
+
+        private void DisplayPentagon()
+        {
+            var outline = new GameObject("BaseOutline", typeof(LineRenderer));
+            outline.transform.parent = transform;
+            outline.transform.localPosition = new Vector3(0,-3,0);
+            outline.transform.localRotation = Quaternion.identity;
+            outline.transform.localScale = Vector3.one;
+            var outlineRenderer = outline.GetComponent<LineRenderer>();
+            outlineRenderer.useWorldSpace = false;
+            outlineRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            outlineRenderer.receiveShadows = false;
+            outlineRenderer.material = new Material(Shader.Find("Particles/Alpha Blended Premultiply"));
+            outlineRenderer.widthMultiplier = 0.25f * outline.transform.lossyScale.x;
+            outlineRenderer.positionCount = 5;
+            outlineRenderer.loop = true;
+            for (int i = 0; i < 5; i++)
+            {
+                outlineRenderer.SetPosition(i, new Vector2().FromAngleAndMagnitude(Mathf.PI*2/5*i+(Mathf.PI/2), 2.5f).Vec2ToVec3());
             }
         }
 
@@ -188,6 +247,11 @@ namespace Logic.Gameplay.Ships
                 Damage[systemToDamage] = true;
                 result--;
             }
+        }
+
+        private void Update()
+        {
+            SetSpeedMarker(Speed);
         }
     }
 }

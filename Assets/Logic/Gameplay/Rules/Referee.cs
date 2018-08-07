@@ -30,6 +30,7 @@ namespace Logic.Gameplay.Rules
         public WellRng Rng;
         public int PointsLimit;
         public GameObject SelectionRing;
+        public GameObject RangeRings;
 
         private Vector3? _lastRightMousePos, _lastMiddleMousePos;
 
@@ -60,6 +61,8 @@ namespace Logic.Gameplay.Rules
         public GameObject MouseSelection;
 
         public int LastObservedInstruction;
+        
+        private GameObject _gameGrid;
 
         public void SetGameState(GameResponse response)
         {
@@ -88,9 +91,11 @@ namespace Logic.Gameplay.Rules
 
         private void Awake()
         {
-            var grid = GetComponentInChildren<GameGrid>();
-            grid.Size = PlayArea;
-            grid.Gradiation = 5;
+//            var grid = GetComponentInChildren<GameGrid>();
+//            grid.Size = PlayArea;
+//            grid.Gradiation = 5;
+
+            _gameGrid = transform.Find("Game Grid").gameObject;
 
             Rng = new WellRng(Seed);
         }
@@ -197,6 +202,9 @@ namespace Logic.Gameplay.Rules
             CameraOperator.UpdateCamera();
 
             UpdateMouseLocationAndSelection();
+            
+            _gameGrid.GetComponentInChildren<MeshRenderer>().material.SetVector("_MousePosition", MouseLocation);
+            
             SetTooltip();
 
             UpdateFlashedMessages();

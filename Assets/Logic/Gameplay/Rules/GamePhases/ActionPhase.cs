@@ -120,9 +120,7 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                         var shots = _selectedWeapon.Shots * _selectedSystems.Count;
                         var damage = _selectedWeapon.Damage;
-                        var defenderPool = (1 + turn.thrust) *
-                                           (GetRangeModifier(firingShip, _selectedWeapon, targetShip) +
-                                            targetShip.CalculateDefensiveModifier());
+                        var defenderPool = turn.thrust + GetRangeModifier(firingShip, _selectedWeapon, targetShip) + targetShip.CalculateDefensiveModifier();
 
                         _selectedWeapon = null;
                         foreach (var system in _selectedSystems)
@@ -167,12 +165,17 @@ namespace Logic.Gameplay.Rules.GamePhases
                                 _selectedWeapon = system;
                                 _selectedSystems.Add(index);
                                 image.color = Color.yellow;
-                                _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform,
-                                    _selectedWeapon.ShortRange, 0.1f, 0, Mathf.PI * 2, 64, Color.white));
-                                _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform,
-                                    _selectedWeapon.MediumRange, 0.1f, 0, Mathf.PI * 2, 64, Color.white));
-                                _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform,
-                                    _selectedWeapon.LongRange, 0.1f, 0, Mathf.PI * 2, 64, Color.white));
+
+                                var rangeRings = Object.Instantiate(_gameplayHandler.Referee.RangeRings,
+                                    new Vector3(0, -3, 0), Quaternion.identity);
+                                rangeRings.GetComponent<RangeMarkers>().Setup(
+                                    _selectedWeapon.ShortRange,
+                                    _selectedWeapon.MediumRange,
+                                    _selectedWeapon.LongRange,
+                                    _selection.transform.position - new Vector3(0, -3, 0),
+                                    _gameplayHandler.Referee
+                                );
+                                _gameplayHandler.Arcs.Add(rangeRings);
                             }
                             else
                             {
@@ -252,24 +255,29 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                         var thrustToSpend = 0;
 
-                        var turnDefenceModifier = turn.defence_modifier + targetShip.CalculateDefensiveModifier();
+                        var shipDefenceModifier = targetShip.CalculateDefensiveModifier();
+                        var turnDefenceModifier = turn.defence_modifier + shipDefenceModifier;
                         var defenceIndicator = _gameplayHandler.CreateText(_gameplayHandler.LowerBar, new Vector2(90, 45),
-                            string.Format("{0:} x (1 + 0/{1:}) = {0:}", turnDefenceModifier, targetShip.ThrustRemaining));
+                            string.Format("{0:} + {1:} + 0/{2:} = {3:}", turn.defence_modifier, shipDefenceModifier, targetShip.ThrustRemaining, turnDefenceModifier));
 
                         _gameplayHandler.CreateButton(new Vector2(95, 0), new Vector2(45, 45), "+",
                             () =>
                             {
                                 if (thrustToSpend >= targetShip.ThrustRemaining) return;
                                 thrustToSpend++;
-                                defenceIndicator.GetComponent<Text>().text =  string.Format("{0:} x (1 + {1:}/{2:}) = {3:}", 
-                                    turnDefenceModifier, thrustToSpend, targetShip.ThrustRemaining, turnDefenceModifier * (1 + thrustToSpend));
+                                defenceIndicator.GetComponent<Text>().text =
+                                    string.Format("{0:} + {1:} + {2:}/{3:} = {4:}",
+                                        turn.defence_modifier, shipDefenceModifier, thrustToSpend,
+                                        targetShip.ThrustRemaining, turnDefenceModifier + thrustToSpend);
                             });
                         _gameplayHandler.CreateButton(new Vector2(-95, 0), new Vector2(45, 45), "-",
                             () => {
                                 if (thrustToSpend <= 0) return;
                                 thrustToSpend--;
-                                defenceIndicator.GetComponent<Text>().text =  string.Format("{0:} x (1 + {1:}/{2:}) = {3:}", 
-                                    turnDefenceModifier, thrustToSpend, targetShip.ThrustRemaining, turnDefenceModifier * (1 + thrustToSpend));
+                                defenceIndicator.GetComponent<Text>().text =
+                                    string.Format("{0:} + {1:} + {2:}/{3:} = {4:}",
+                                        turn.defence_modifier, shipDefenceModifier, thrustToSpend,
+                                        targetShip.ThrustRemaining, turnDefenceModifier + thrustToSpend);
                             });
 
                         _gameplayHandler.CreateButton(new Vector2(0, -55), new Vector2(135, 35),
@@ -283,7 +291,7 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                                 var shots = turn.shots;
                                 var damage = turn.damage;
-                                var defenderPool = turnDefenceModifier * (1 + thrustToSpend);
+                                var defenderPool = turnDefenceModifier + thrustToSpend;
 
                                 ResolveAttack(firingShip, shots, damage, targetShip, defenderPool);
                                 _gameplayHandler.ClearArcs();
