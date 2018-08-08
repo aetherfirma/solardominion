@@ -80,5 +80,25 @@ namespace Logic.Display
 
             return obj;
         }
+
+        public static GameObject CreatePentagon()
+        {
+            var outline = new GameObject("BaseOutline", typeof(LineRenderer));
+            var outlineRenderer = outline.GetComponent<LineRenderer>();
+            outlineRenderer.useWorldSpace = false;
+            outlineRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            outlineRenderer.receiveShadows = false;
+            outlineRenderer.material = new Material(Shader.Find("Particles/Alpha Blended Premultiply"));
+            outlineRenderer.widthMultiplier = 0.25f * outline.transform.lossyScale.x;
+            outlineRenderer.positionCount = 5;
+            outlineRenderer.loop = true;
+            for (int i = 0; i < 5; i++)
+            {
+                outlineRenderer.SetPosition(i,
+                    new Vector2().FromAngleAndMagnitude(Mathf.PI * 2 / 5 * i + (Mathf.PI / 2), 2.5f).Vec2ToVec3());
+            }
+
+            return outline;
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Logic.Display;
 using Logic.Gameplay.Players;
 using Logic.Maths;
 using Logic.Utilities;
@@ -48,7 +49,7 @@ namespace Logic.Gameplay.Ships
         private void LerpPosition()
         {
             var delta = _desiredPosition - transform.position;
-            var movement = delta.normalized * Speed * Time.deltaTime;
+            var movement = delta.normalized * Speed * 2.5f * Time.deltaTime;
             if (delta.magnitude < movement.magnitude) transform.position = _desiredPosition;
             else transform.position = transform.position + movement;
         }
@@ -164,23 +165,12 @@ namespace Logic.Gameplay.Ships
 
         private void DisplayPentagon()
         {
-            var outline = new GameObject("BaseOutline", typeof(LineRenderer));
+            var outline = ArcRenderer.CreatePentagon();
+
             outline.transform.parent = transform;
             outline.transform.localPosition = new Vector3(0,-3,0);
             outline.transform.localRotation = Quaternion.identity;
             outline.transform.localScale = Vector3.one;
-            var outlineRenderer = outline.GetComponent<LineRenderer>();
-            outlineRenderer.useWorldSpace = false;
-            outlineRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            outlineRenderer.receiveShadows = false;
-            outlineRenderer.material = new Material(Shader.Find("Particles/Alpha Blended Premultiply"));
-            outlineRenderer.widthMultiplier = 0.25f * outline.transform.lossyScale.x;
-            outlineRenderer.positionCount = 5;
-            outlineRenderer.loop = true;
-            for (int i = 0; i < 5; i++)
-            {
-                outlineRenderer.SetPosition(i, new Vector2().FromAngleAndMagnitude(Mathf.PI*2/5*i+(Mathf.PI/2), 2.5f).Vec2ToVec3());
-            }
         }
 
         public ShipSize Class
