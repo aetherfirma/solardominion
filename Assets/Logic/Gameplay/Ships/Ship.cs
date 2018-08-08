@@ -32,10 +32,30 @@ namespace Logic.Gameplay.Ships
 
         private Text _speedMarker;
         private int _setSpeed = -1;
+        private Vector3 _desiredPosition;
 
         public bool Alive
         {
             get { return !(Fled || Damage.All(d => d)); }
+        }
+
+        public Vector3 Position
+        {
+            get { return _desiredPosition; }
+            set { _desiredPosition = value; }
+        }
+
+        private void LerpPosition()
+        {
+            var delta = _desiredPosition - transform.position;
+            var movement = delta.normalized * Speed * Time.deltaTime;
+            if (delta.magnitude < movement.magnitude) transform.position = _desiredPosition;
+            else transform.position = transform.position + movement;
+        }
+
+        public void SkipMovement()
+        {
+            transform.position = _desiredPosition;
         }
 
         public void CalculateThrust()
@@ -252,6 +272,7 @@ namespace Logic.Gameplay.Ships
         private void Update()
         {
             SetSpeedMarker(Speed);
+            LerpPosition();
         }
     }
 }

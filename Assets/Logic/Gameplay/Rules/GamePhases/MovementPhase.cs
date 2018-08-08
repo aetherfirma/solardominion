@@ -38,7 +38,7 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                             var newPosition = new Vector3(turn.location[0], 0, turn.location[1]);
 
-                            var leadingPoint = ship.transform.position +
+                            var leadingPoint = ship.Position +
                                                ship.transform.rotation * (Vector3.forward * ship.Speed * 5);
                             var distance = newPosition - leadingPoint;
                             var thrust = Mathf.CeilToInt(distance.magnitude / ship.DistancePerThrust());
@@ -49,9 +49,9 @@ namespace Logic.Gameplay.Rules.GamePhases
                             }
 
                             ship.ThrustRemaining -= thrust;
-                            var movementDelta = newPosition - ship.transform.position;
+                            var movementDelta = newPosition - ship.Position;
                             ship.Speed = Mathf.CeilToInt(movementDelta.magnitude / 5f);
-                            ship.transform.position = newPosition;
+                            ship.Position = newPosition;
                             ship.transform.rotation = Quaternion.LookRotation(movementDelta);
 
                             _gameplayHandler.RemoveShipFromCurrentStep(ship);
@@ -96,7 +96,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                 {
                     if (Input.GetMouseButtonUp(0))
                     {
-                        var leadingPoint = _selection.transform.position + _selection.transform.rotation * (Vector3.forward * _selection.Speed * 5);
+                        var leadingPoint = _selection.Position + _selection.transform.rotation * (Vector3.forward * _selection.Speed * 5);
                         var distance = _gameplayHandler.Referee.MouseLocation - leadingPoint;
                         var thrust = Mathf.CeilToInt(distance.magnitude / _selection.DistancePerThrust());
                         if (thrust > _selection.ThrustRemaining)
@@ -106,9 +106,9 @@ namespace Logic.Gameplay.Rules.GamePhases
                         }
 
                         _selection.ThrustRemaining -= thrust;
-                        var movementDelta = _gameplayHandler.Referee.MouseLocation - _selection.transform.position;
+                        var movementDelta = _gameplayHandler.Referee.MouseLocation - _selection.Position;
                         _selection.Speed = Mathf.CeilToInt(movementDelta.magnitude / 5f);
-                        _selection.transform.position = _gameplayHandler.Referee.MouseLocation;
+                        _selection.Position = _gameplayHandler.Referee.MouseLocation;
                         _selection.transform.rotation = Quaternion.LookRotation(movementDelta);
                         BroadcastMovement(_selection);
                         _gameplayHandler.RemoveShipFromCurrentStep(_selection);
@@ -127,7 +127,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                 action = TurnType.MovementPhase,
                 player = ship.Player.Uuid,
                 ship = ship.ShipUuid,
-                location = new[] {ship.transform.position.x, ship.transform.position.z},
+                location = new[] {ship.Position.x, ship.Position.z},
                 rotation = ship.transform.rotation.eulerAngles.y,
                 speed = ship.Speed
             };

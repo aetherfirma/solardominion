@@ -88,6 +88,7 @@ namespace Logic.Gameplay.Rules
                     _itemsForRemoval.Add(selectable.gameObject);
                     selectable.transform.localPosition =
                         new Vector3(-2.5f + 5f / (factionShips.Length - 1) * n, -1, 3.5f);
+                    selectable.Position = selectable.transform.position;
                     selectable.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
                     selectable.transform.rotation = Quaternion.Euler(0, 180 - 45, 0);
 

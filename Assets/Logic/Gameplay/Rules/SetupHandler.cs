@@ -46,13 +46,16 @@ namespace Logic.Gameplay.Rules
                         var turn = state.turns[i];
                         if (turn.player != _referee.PlayerUuid && turn.action == TurnType.Deploy)
                         {
-                            var ship = _referee.Players[_referee.CurrentPlayer].Fleet.Single(s => s.ShipUuid == turn.ship);
+                            var ship = _referee.Players[_referee.CurrentPlayer].Fleet
+                                .Single(s => s.ShipUuid == turn.ship);
                             _referee.FlashMessage(string.Format("Just recieved deployment for {0:}", ship.Name()));
-                            ship.transform.position = new Vector3(turn.location[0], 0, turn.location[1]);
+                            ship.Position = new Vector3(turn.location[0], 0, turn.location[1]);
+                            ship.SkipMovement();
                             ship.Speed = turn.speed;
                             ship.transform.rotation = Quaternion.Euler(0, turn.rotation, 0);
                             ship.Deployed = true;
                         }
+
                         _referee.LastObservedInstruction = i + 1;
                         if (!FindNextSetupPlayer()) _referee.Phase = GamePhase.Play;
                     }
@@ -84,14 +87,16 @@ namespace Logic.Gameplay.Rules
                     _referee.LastObservedInstruction = response.turns.Count;
                     _referee.SetGameState(response);
                 },
-                www => _referee.FlashMessage("There was a server error (" + www.responseCode +  ") creating a game\n"+www.error),
-                www => _referee.FlashMessage("There was a network error creating a game\n"+www.error)
+                www => _referee.FlashMessage("There was a server error (" + www.responseCode + ") creating a game\n" +
+                                             www.error),
+                www => _referee.FlashMessage("There was a network error creating a game\n" + www.error)
             );
         }
 
         private void SetHeading()
         {
             var delta = _referee.MouseLocation - _selection.transform.position;
+            _selection.Speed = Mathf.CeilToInt(delta.magnitude / 5);
             _selection.transform.rotation = Quaternion.LookRotation(delta);
             if (Input.GetMouseButtonUp(0))
             {
@@ -99,7 +104,6 @@ namespace Logic.Gameplay.Rules
                     Mathf.Abs(_referee.MouseLocation.z) < _referee.PlayArea / 2f)
                 {
                     _headingSet = false;
-                    _selection.Speed = Mathf.CeilToInt(delta.magnitude / 5);
                     _selection.Deployed = true;
                     BroadcastDeployment(_selection);
                     _selection = null;
@@ -113,7 +117,8 @@ namespace Logic.Gameplay.Rules
 
         private void SetPosition()
         {
-            _selection.transform.position = _referee.MouseLocation;
+            _selection.Position = _referee.MouseLocation;
+            _selection.SkipMovement();
             if (Input.GetMouseButtonUp(0))
             {
                 if (_referee.ValidShipPosition(_selection.transform.position))
@@ -154,11 +159,12 @@ namespace Logic.Gameplay.Rules
                 foreach (var ship in _referee.Players[player].Fleet)
                 {
                     ship.gameObject.SetActive(true);
-                    ship.transform.position = Quaternion.Euler(0, 360f / _referee.Players.Length * player, 0) *
-                                              new Vector3(
-                                                  -_referee.PlayArea / 2f + (float) _referee.PlayArea /
-                                                  (_referee.Players[player].Fleet.Length - 1) * n, 5,
-                                                  -_referee.PlayArea / 2 - 10);
+                    ship.Position = Quaternion.Euler(0, 360f / _referee.Players.Length * player, 0) *
+                                    new Vector3(
+                                        -_referee.PlayArea / 2f + (float) _referee.PlayArea /
+                                        (_referee.Players[player].Fleet.Length - 1) * n, 5,
+                                        -_referee.PlayArea / 2 - 10);
+                    ship.SkipMovement();
                     ship.transform.rotation = Quaternion.Euler(0, 360f / _referee.Players.Length * player, 0);
                     n++;
                 }
