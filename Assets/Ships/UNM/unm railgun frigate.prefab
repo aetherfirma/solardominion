@@ -269,14 +269,46 @@ MonoBehaviour:
   TextPrefab: {fileID: 114028964508136352, guid: 3325d97a304daac4c93d5b48b6f277e7,
     type: 2}
   Systems:
-  - {fileID: 114885478457026964, guid: 38d2caaa70509c04baad9274b5af4d2f, type: 2}
-  - {fileID: 114983167233116564, guid: bc66c1efb244f194b955013bdb921c63, type: 2}
-  - {fileID: 114983167233116564, guid: bc66c1efb244f194b955013bdb921c63, type: 2}
-  - {fileID: 114465706867717336, guid: a5f43a16e7d75554d9f0d7f0d5fc5f7a, type: 2}
-  - {fileID: 114906593097577518, guid: 2dd1f6156adb94840b9dd99f51e4fe0c, type: 2}
-  - {fileID: 114906593097577518, guid: 2dd1f6156adb94840b9dd99f51e4fe0c, type: 2}
-  - {fileID: 114960580605481350, guid: d045f639a48c83344bb7e7151e68de2d, type: 2}
-  - {fileID: 114960580605481350, guid: d045f639a48c83344bb7e7151e68de2d, type: 2}
+  - System: {fileID: 114960580605481350, guid: d045f639a48c83344bb7e7151e68de2d, type: 2}
+    X: 0
+    Y: 0
+    Width: 2
+    Height: 1
+  - System: {fileID: 114960580605481350, guid: d045f639a48c83344bb7e7151e68de2d, type: 2}
+    X: 0
+    Y: 3
+    Width: 2
+    Height: 1
+  - System: {fileID: 114983167233116564, guid: bc66c1efb244f194b955013bdb921c63, type: 2}
+    X: 2
+    Y: 0
+    Width: 3
+    Height: 1
+  - System: {fileID: 114983167233116564, guid: bc66c1efb244f194b955013bdb921c63, type: 2}
+    X: 2
+    Y: 3
+    Width: 3
+    Height: 1
+  - System: {fileID: 114885478457026964, guid: 38d2caaa70509c04baad9274b5af4d2f, type: 2}
+    X: 0
+    Y: 1
+    Width: 2
+    Height: 2
+  - System: {fileID: 114465706867717336, guid: a5f43a16e7d75554d9f0d7f0d5fc5f7a, type: 2}
+    X: 2
+    Y: 1
+    Width: 1
+    Height: 2
+  - System: {fileID: 114906593097577518, guid: 2dd1f6156adb94840b9dd99f51e4fe0c, type: 2}
+    X: 3
+    Y: 1
+    Width: 2
+    Height: 1
+  - System: {fileID: 114906593097577518, guid: 2dd1f6156adb94840b9dd99f51e4fe0c, type: 2}
+    X: 3
+    Y: 2
+    Width: 2
+    Height: 1
   UUID: 8723f977-d16c-4b1e-b937-5888c93a2fef
   ShipClass: 
   Faction: 0

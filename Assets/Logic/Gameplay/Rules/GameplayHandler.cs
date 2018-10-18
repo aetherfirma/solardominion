@@ -386,24 +386,24 @@ namespace Logic.Gameplay.Rules
                 rectTransform.anchoredPosition = new Vector2(-55 / 2f * systemsLength + 55 * i, 0);
 
                 var image = icon.GetComponent<Image>();
-                if (system.Type == SystemType.Composite && subsystem > -1)
+                if (system.System.Type == SystemType.Composite && subsystem > -1)
                 {
-                    var texture2D = system.SubSystems[subsystem].Icon;
+                    var texture2D = system.System.SubSystems[subsystem].Icon;
                     image.sprite = Sprite.Create(texture2D,
                         new Rect(0, 0, texture2D.width, texture2D.height),
                         new Vector2(texture2D.width / 2f, texture2D.height / 2f));
                 }
                 else
                 {
-                    image.sprite = Sprite.Create(system.Icon,
-                        new Rect(0, 0, system.Icon.width, system.Icon.height),
-                        new Vector2(system.Icon.width / 2f, system.Icon.height / 2f));
+                    image.sprite = Sprite.Create(system.System.Icon,
+                        new Rect(0, 0, system.System.Icon.width, system.System.Icon.height),
+                        new Vector2(system.System.Icon.width / 2f, system.System.Icon.height / 2f));
                 }
 
                 button = icon.GetComponent<Button>();
 
                 button.targetGraphic = image;
-                var interactable = !damaged && !used && isInteractable(i, system, subsystem);
+                var interactable = !damaged && !used && isInteractable(i, system.System, subsystem);
 
                 button.interactable = interactable;
 
@@ -412,7 +412,7 @@ namespace Logic.Gameplay.Rules
                 var unmodifiedSubsystem = subsystem;
                 if (interactable)
                     button.onClick.AddListener(() =>
-                        onClick(unmodifiedIndex, system, unmodifiedSubsystem, unmodifiedImage));
+                        onClick(unmodifiedIndex, system.System, unmodifiedSubsystem, unmodifiedImage));
 
                 image.color = interactable
                     ? Color.white

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Logic.Display;
 using Logic.Gameplay.Players;
@@ -14,7 +15,7 @@ namespace Logic.Gameplay.Ships
     {
         public TextMeshPro TextPrefab;
 
-        public ShipSystem[] Systems;
+        public ShipSystemPosition[] Systems;
         public string UUID;
         public string ShipClass;
         public Player Player;
@@ -39,6 +40,31 @@ namespace Logic.Gameplay.Ships
         private Vector3 _desiredPosition;
 
         private PentagonRenderer _basePentagon;
+
+        private void CheckSystemDiagram()
+        {
+            var systems = new bool[20];
+            foreach (var systemPosition in Systems)
+            {
+                for (int dx = 0; dx < systemPosition.Width; dx++)
+                {
+                    for (int dy = 0; dy < systemPosition.Height; dy++)
+                    {
+                        var i = 5 * (systemPosition.Y + dy) + dx + systemPosition.X;
+                        Debug.Log("Position: " + (systemPosition.X + dx) + ", " + (systemPosition.Y + dy) + ": " + i);
+                        if (systems[i] == true) throw new Exception(string.Format("{0},{1} is double filled", systemPosition.X + dx, systemPosition.Y + dy));
+                        systems[i] = true;
+                    }
+                }
+            }
+
+            var unfilled = new List<string>();
+            for (int i = 0; i < 20; i++)
+            {
+                if (systems[i] == false) unfilled.Add(string.Format("{0}, {1}", i / 5, i % 5));
+            }
+            if (unfilled.Count > 0) throw new Exception(string.Format("Positions {0} filled", string.Join(", ", unfilled.ToArray())));
+        }
 
         public bool Alive
         {
@@ -68,7 +94,7 @@ namespace Logic.Gameplay.Ships
         {
             ThrustRemaining = Systems
                 .Select((system, index) =>
-                    system.Type == SystemType.Composite ? system.SubSystems[Subsystem[index]] : system)
+                    system.System.Type == SystemType.Composite ? system.System.SubSystems[Subsystem[index]] : system.System)
                 .Where(system => system.Type == SystemType.Engine)
                 .Sum(system => system.Thrust);
         }
@@ -77,7 +103,7 @@ namespace Logic.Gameplay.Ships
         {
             return Systems
                 .Select((system, index) =>
-                    system.Type == SystemType.Composite ? system.SubSystems[Subsystem[index]] : system)
+                    system.System.Type == SystemType.Composite ? system.System.SubSystems[Subsystem[index]] : system.System)
                 .Where(system => system.Type == SystemType.Defence)
                 .Sum(system => system.Defence);
         }
@@ -113,25 +139,26 @@ namespace Logic.Gameplay.Ships
 
         public int CalculateCost(int training)
         {
-            return Systems.Sum(shipSystem => shipSystem.Cost[training - 2]) + Systems.Length * 10;
+            return Systems.Sum(shipSystem => shipSystem.System.Cost[training - 2]) + Systems.Length * 10;
         }
 
         private void Start()
         {
+            CheckSystemDiagram();
             DisplayPentagon();
 
             var hardpoints = gameObject.FindChildrenWithName("Hardpoint");
             var systemSearch = 0;
             foreach (var hardpoint in hardpoints)
             {
-                while (systemSearch < Systems.Length && !Systems[systemSearch].Displayed)
+                while (systemSearch < Systems.Length && !Systems[systemSearch].System.Displayed)
                 {
                     systemSearch++;
                 }
 
-                if (systemSearch < Systems.Length && Systems[systemSearch].Displayed)
+                if (systemSearch < Systems.Length && Systems[systemSearch].System.Displayed)
                 {
-                    Instantiate(Systems[systemSearch].Model[(int) Faction], hardpoint.transform);
+                    Instantiate(Systems[systemSearch].System.Model[(int) Faction], hardpoint.transform);
                     systemSearch++;
                 }
             }
@@ -206,7 +233,7 @@ namespace Logic.Gameplay.Ships
 
         public bool ShouldShipContinue()
         {
-            return Systems.Select((t, i) => t.ResolveSystem(Subsystem[i]))
+            return Systems.Select((t, i) => t.System.ResolveSystem(Subsystem[i]))
                 .Where((system, i) => (system.Type == SystemType.Weapon ||
                                        system.Type == SystemType.Hangar) && !Damage[i] && !Used[i])
                 .Any();

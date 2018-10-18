@@ -198,11 +198,31 @@ MonoBehaviour:
   TextPrefab: {fileID: 114028964508136352, guid: 3325d97a304daac4c93d5b48b6f277e7,
     type: 2}
   Systems:
-  - {fileID: 114885478457026964, guid: 38d2caaa70509c04baad9274b5af4d2f, type: 2}
-  - {fileID: 114960580605481350, guid: d045f639a48c83344bb7e7151e68de2d, type: 2}
-  - {fileID: 114960580605481350, guid: d045f639a48c83344bb7e7151e68de2d, type: 2}
-  - {fileID: 114400465259707146, guid: 1d3cfc5742b2b4a44a19cd4291373e00, type: 2}
-  - {fileID: 114906593097577518, guid: 2dd1f6156adb94840b9dd99f51e4fe0c, type: 2}
+  - System: {fileID: 114960580605481350, guid: d045f639a48c83344bb7e7151e68de2d, type: 2}
+    X: 0
+    Y: 0
+    Width: 2
+    Height: 1
+  - System: {fileID: 114960580605481350, guid: d045f639a48c83344bb7e7151e68de2d, type: 2}
+    X: 0
+    Y: 3
+    Width: 1
+    Height: 2
+  - System: {fileID: 114885478457026964, guid: 38d2caaa70509c04baad9274b5af4d2f, type: 2}
+    X: 0
+    Y: 1
+    Width: 2
+    Height: 2
+  - System: {fileID: 114400465259707146, guid: 1d3cfc5742b2b4a44a19cd4291373e00, type: 2}
+    X: 2
+    Y: 0
+    Width: 2
+    Height: 4
+  - System: {fileID: 114906593097577518, guid: 2dd1f6156adb94840b9dd99f51e4fe0c, type: 2}
+    X: 4
+    Y: 0
+    Width: 1
+    Height: 4
   UUID: 5faec46d-02f6-4c77-a44f-4b85c29cff79
   ShipClass: 
   Faction: 1
