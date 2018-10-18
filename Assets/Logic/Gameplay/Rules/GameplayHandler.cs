@@ -407,10 +407,6 @@ namespace Logic.Gameplay.Rules
 
                 button.interactable = interactable;
 
-                var card = button.gameObject.AddComponent<CardTooltip>();
-                card.Image = system.CardImages[(int) ship.Player.Faction];
-                card.ParentTransform = Referee.UiCanvas;
-
                 var unmodifiedImage = image;
                 var unmodifiedIndex = i;
                 var unmodifiedSubsystem = subsystem;

@@ -13,7 +13,6 @@ namespace Logic.Gameplay.Ships
         public Order[] Orders;
         public GameObject[] Model;
         public bool Displayed;
-        public Texture2D[] CardImages;
         public Texture2D Icon;
         public int[] Cost;
 
