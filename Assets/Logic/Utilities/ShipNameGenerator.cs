@@ -5,7 +5,7 @@ namespace Logic.Utilities
 {
     public class ShipNameGenerator
     {
-        private readonly string[] _shipNameNouns =
+        private static readonly string[] ShipNameNouns =
         {
             "People",
             "History",
@@ -108,7 +108,7 @@ namespace Logic.Utilities
             "Protection"
         };
 
-        public string IP3Name(Ship ship)
+        public static string IP3Name(Ship ship)
         {
             var guid = new Guid(ship.ShipUuid).ToByteArray();
 
@@ -343,10 +343,10 @@ namespace Logic.Utilities
                 "Zealous"
             };
 
-            return string.Format("PDV {0:} {1:}", adjectives[guid[9] % adjectives.Length], _shipNameNouns[guid[6] % _shipNameNouns.Length]);
+            return string.Format("PDV {0:} {1:}", adjectives[guid[9] % adjectives.Length], ShipNameNouns[guid[6] % ShipNameNouns.Length]);
         }
 
-        public string UNNName(Ship ship)
+        public static string UNNName(Ship ship)
         {
             var guid = new Guid(ship.ShipUuid).ToByteArray();
 
@@ -598,7 +598,7 @@ namespace Logic.Utilities
                 "Islamabad"
             };
 
-            return string.Format("UNN {0:} of {1:}", _shipNameNouns[guid[6] % _shipNameNouns.Length],
+            return string.Format("UNN {0:} of {1:}", ShipNameNouns[guid[6] % ShipNameNouns.Length],
                 places[guid[15] % places.Length]);
         }
     }

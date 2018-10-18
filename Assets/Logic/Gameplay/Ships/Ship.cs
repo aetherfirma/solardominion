@@ -37,7 +37,6 @@ namespace Logic.Gameplay.Ships
         private Text _speedMarker;
         private int _setSpeed = -1;
         private Vector3 _desiredPosition;
-        private ShipNameGenerator _nameGenerator = new ShipNameGenerator();
 
         private PentagonRenderer _basePentagon;
 
@@ -185,9 +184,9 @@ namespace Logic.Gameplay.Ships
                 switch (Player.Faction)
                 {
                     case Faction.UNM:
-                        return _nameGenerator.UNNName(this);
+                        return ShipNameGenerator.UNNName(this);
                     case Faction.IP3:
-                        return _nameGenerator.IP3Name(this);
+                        return ShipNameGenerator.IP3Name(this);
                 }
             }
             catch (NullReferenceException)
