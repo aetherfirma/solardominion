@@ -10,7 +10,7 @@ namespace Logic.Network
     public class GameResponse
     {
         public string id, scenario, seed;
-        public int no_players, environment;
+        public int no_players;
         public string[] players;
         public float started, modified;
         public Dictionary<string, FleetJson> rosters;

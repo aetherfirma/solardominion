@@ -67,6 +67,12 @@ namespace Logic.Maths
             return spread + min;
         }
 
+        public float NextFloat(float min = float.MinValue, float max = float.MaxValue)
+        {
+            var delta = max + 1 - min;
+            return (float) (NextUnitDouble() * delta + min);
+        }
+
         public bool NextBool()
         {
             return NextInt(0, 1) == 1;

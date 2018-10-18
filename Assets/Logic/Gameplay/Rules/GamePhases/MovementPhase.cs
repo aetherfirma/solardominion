@@ -4,7 +4,6 @@ using Logic.Gameplay.Ships;
 using Logic.Network;
 using Logic.Utilities;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Logic.Gameplay.Rules.GamePhases
 {
@@ -13,7 +12,7 @@ namespace Logic.Gameplay.Rules.GamePhases
         private Ship _selection;
         private GameplayHandler _gameplayHandler;
         private GameObject _movementPentagon, _thrustPentagon;
-        private Text _movementMarker;
+        private PentagonRenderer _movementMarker;
 
         public MovementPhase(GameplayHandler gameplayHandler)
         {
@@ -27,7 +26,8 @@ namespace Logic.Gameplay.Rules.GamePhases
 
             if (_gameplayHandler.CurrentPlayer.Number != _gameplayHandler.Referee.LocalPlayer)
             {
-                _gameplayHandler.Referee.DisplayUpperText(string.Format("Waiting for {0:} to play", _gameplayHandler.CurrentPlayer.Faction));
+                _gameplayHandler.Referee.DisplayUpperText(string.Format("Waiting for {0:} to play",
+                    _gameplayHandler.CurrentPlayer.Faction));
 
                 if (_gameplayHandler.Referee.LastObservedInstruction < state.turns.Count)
                 {
@@ -37,7 +37,8 @@ namespace Logic.Gameplay.Rules.GamePhases
                         if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.action == TurnType.MovementPhase)
                         {
                             var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
-                            _gameplayHandler.Referee.FlashMessage(string.Format("Just recieved movement for {0:}", ship.Name()));
+                            _gameplayHandler.Referee.FlashMessage(string.Format("Just recieved movement for {0:}",
+                                ship.Name()));
 
                             var newPosition = new Vector3(turn.location[0], 0, turn.location[1]);
 
@@ -81,42 +82,27 @@ namespace Logic.Gameplay.Rules.GamePhases
                             _gameplayHandler.ClearArcs();
                             _selection = ship;
 
-                            _movementPentagon = ArcRenderer.CreatePentagon();
+                            _movementPentagon =
+                                PentagonRenderer.CreatePentagon(0.1f, _gameplayHandler.Referee.TextPrefab);
                             _movementPentagon.transform.position =
-                                ship.Position + ship.transform.rotation * (Vector3.forward * ship.Speed * 5) + new Vector3(0,-3,0);
+                                ship.Position + ship.transform.rotation * (Vector3.forward * ship.Speed * 5) +
+                                new Vector3(0, -3, 0);
                             _movementPentagon.transform.rotation = ship.transform.rotation;
 
-                            _thrustPentagon = ArcRenderer.CreatePentagon();
-                            
-                            var markerCanvas = new GameObject("Speed Marker Canvas", typeof(Canvas));
-                            markerCanvas.transform.parent = _thrustPentagon.transform;
-                            markerCanvas.transform.localPosition = new Vector3(0,0,-4);
-                            markerCanvas.transform.localRotation = Quaternion.Euler(90,0,0);
-                            markerCanvas.transform.localScale = new Vector3(.1f,.1f,.1f);
-            
-                            var marker = new GameObject("Speed Marker", typeof(Text));
-                            marker.transform.parent = markerCanvas.transform;
-                            marker.transform.localPosition = Vector3.zero;
-                            marker.transform.localRotation = Quaternion.identity;
-                            marker.transform.localScale = Vector3.one;
+                            _thrustPentagon =
+                                PentagonRenderer.CreatePentagon(0.25f, _gameplayHandler.Referee.TextPrefab);
 
-                            _movementMarker = marker.GetComponent<Text>();
-                            _movementMarker.supportRichText = true;
-                            _movementMarker.fontSize = 10;
-                            _movementMarker.font = Font.CreateDynamicFontFromOSFont("Sansasion", 10);
-                            _movementMarker.alignment = TextAnchor.MiddleCenter;
-
-
-                            // TODO: Add a buton to skip movement
+                            _movementMarker = _thrustPentagon.GetComponent<PentagonRenderer>();
                         }
                     }
                 }
                 else
                 {
                     var targetLocation = _gameplayHandler.Referee.MouseLocation;
-                    var movementDelta = targetLocation - _selection.Position;                    
+                    var movementDelta = targetLocation - _selection.Position;
                     var eventualRotation = Quaternion.LookRotation(movementDelta);
-                    var leadingPoint = _selection.Position + _selection.transform.rotation * (Vector3.forward * _selection.Speed * 5);
+                    var leadingPoint = _selection.Position +
+                                       _selection.transform.rotation * (Vector3.forward * _selection.Speed * 5);
                     var distance = targetLocation - leadingPoint;
 
                     if (distance.magnitude < 1)
@@ -124,22 +110,29 @@ namespace Logic.Gameplay.Rules.GamePhases
                         targetLocation = leadingPoint;
                         distance = Vector3.zero;
                     }
-                    
+
                     var thrust = Mathf.CeilToInt(distance.magnitude / _selection.DistancePerThrust());
                     var newSpeed = Mathf.CeilToInt(movementDelta.magnitude / 5f);
 
 
                     if (_thrustPentagon != null)
                     {
-                        _thrustPentagon.transform.position = new Vector3(0,-3,0) + targetLocation;
+                        _thrustPentagon.transform.position = new Vector3(0, -3, 0) + targetLocation;
                         _thrustPentagon.transform.rotation = eventualRotation;
-                        
+
                         if (thrust <= _selection.ThrustRemaining)
-                            _movementMarker.text = string.Format("New Speed {0:}\nCost {1:} Thrust\n{2:} Remaining",
+                        {
+                            _movementMarker.Text = string.Format("New Speed {0:}\nCost {1:} Thrust\n{2:} Remaining",
                                 newSpeed, thrust, _selection.ThrustRemaining - thrust);
-                        else _movementMarker.text = "INSUFFICIENT THRUST";
+                            _movementMarker.Color = Color.white;
+                        }
+                        else
+                        {
+                            _movementMarker.Text = "INSUFFICIENT THRUST";
+                            _movementMarker.Color = Color.red;
+                        }
                     }
-                    
+
                     if (Input.GetMouseButtonUp(0))
                     {
                         if (thrust > _selection.ThrustRemaining)
@@ -147,7 +140,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                             _gameplayHandler.Referee.FlashMessage("Cannot move here, insufficient thrust");
                             return;
                         }
-                        
+
                         Object.Destroy(_movementPentagon);
                         _movementPentagon = null;
                         Object.Destroy(_thrustPentagon);
@@ -184,15 +177,17 @@ namespace Logic.Gameplay.Rules.GamePhases
             wwwForm.AddField("player", _gameplayHandler.Referee.PlayerUuid);
             wwwForm.AddField("turn", StringSerializationAPI.Serialize<Turn>(turn));
 
-            SimpleRequest.Post(_gameplayHandler.Referee.ServerUrl + "/game/" + _gameplayHandler.Referee.GameUuid + "/turn", wwwForm,
+            SimpleRequest.Post(
+                _gameplayHandler.Referee.ServerUrl + "/game/" + _gameplayHandler.Referee.GameUuid + "/turn", wwwForm,
                 www =>
                 {
                     var response = GameResponse.FromJson(www.downloadHandler.text);
                     _gameplayHandler.Referee.LastObservedInstruction = response.turns.Count;
                     _gameplayHandler.Referee.SetGameState(response);
                 },
-                www => _gameplayHandler.Referee.FlashMessage("There was a server error (" + www.responseCode + ") creating a game\n" +
-                                                            www.error),
+                www => _gameplayHandler.Referee.FlashMessage("There was a server error (" + www.responseCode +
+                                                             ") creating a game\n" +
+                                                             www.error),
                 www => _gameplayHandler.Referee.FlashMessage("There was a network error creating a game\n" + www.error)
             );
         }

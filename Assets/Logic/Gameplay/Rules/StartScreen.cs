@@ -41,9 +41,6 @@ namespace Logic.Gameplay.Rules
             var wwwForm = new WWWForm();
             wwwForm.AddField("players", "2");
             wwwForm.AddField("scenario", _referee.Scenario.Name);
-            var skybox = Random.Range(0, _referee.Skyboxes.Length);
-            wwwForm.AddField("environment", skybox);
-            RenderSettings.skybox = _referee.Skyboxes[skybox];
             var www = UnityWebRequest.Post(_referee.ServerUrl + "/game/create", wwwForm);
             www.SendWebRequest();
 
@@ -77,7 +74,6 @@ namespace Logic.Gameplay.Rules
                 {
                     var response = JoinResponse.FromJson(www.downloadHandler.text);
                     _referee.SetGameState(response.game);
-                    RenderSettings.skybox = _referee.Skyboxes[response.game.environment];
                     _referee.GameUuid = response.game.id;
                     _referee.PlayerUuid = response.player_id;
                     _referee.FlashMessage("You have joined game " + _referee.GameUuid);

@@ -336,7 +336,19 @@ namespace Logic.Gameplay.Rules.GamePhases
 
         private static int GetRangeModifier(Ship ship, ShipSystem selectedWeapon, Ship target)
         {
-            var range = (ship.transform.position - target.transform.position).magnitude;
+//            var range = (ship.transform.position - target.transform.position).magnitude;
+
+            var shipHitPoints = ship.HitPoints();
+            var targetHitPoints = target.HitPoints();
+
+            var range = shipHitPoints.Aggregate(
+                float.MaxValue, 
+                (current1, shipPoint) => targetHitPoints.Aggregate(
+                    current1, 
+                    (current, targetPoint) => Mathf.Min(current, (shipPoint - targetPoint).magnitude)
+                )
+            );
+
             if (range < selectedWeapon.ShortRange) return selectedWeapon.ShortModifier;
             if (range < selectedWeapon.MediumRange) return selectedWeapon.MediumModifier;
             return selectedWeapon.LongModifier;

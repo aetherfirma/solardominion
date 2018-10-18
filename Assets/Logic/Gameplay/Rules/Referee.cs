@@ -7,8 +7,9 @@ using Logic.Gameplay.Ships;
 using Logic.Maths;
 using Logic.Network;
 using Logic.Ui;
+using Logic.Utilities;
+using TMPro;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
@@ -17,6 +18,8 @@ namespace Logic.Gameplay.Rules
     public class Referee : MonoBehaviour
     {
         public Material[] Skyboxes;
+        public GameObject[] Asteroids;
+        public AsteroidField[] AsteroidFields;
         public GameObject ShipDestroyedExplosion;
         public GameObject ShipHitExplosion;
         public Camera Camera;
@@ -29,20 +32,20 @@ namespace Logic.Gameplay.Rules
         public string Seed;
         public WellRng Rng;
         public int PointsLimit;
-        public GameObject SelectionRing;
         public GameObject RangeRings;
+        public TextMeshPro TextPrefab;
 
         private Vector3? _lastRightMousePos, _lastMiddleMousePos;
 
         public Plane PlaySurface;
 
-        private Text _upperDisplayText;
         public Button LowerButton;
         public RectTransform SelectionPanel;
         public RectTransform FlashedMessageElement;
         public RectTransform StartScreen;
         public RectTransform FactionSelection;
         public RectTransform LowerBar;
+        public RectTransform TurnIndicator;
         public Sprite ButtonSprite;
         public Font StandardFont;
         public MessageTooltip Tooltip;
@@ -61,7 +64,7 @@ namespace Logic.Gameplay.Rules
         public GameObject MouseSelection;
 
         public int LastObservedInstruction;
-        
+
         private GameObject _gameGrid;
 
         public void SetGameState(GameResponse response)
@@ -91,10 +94,6 @@ namespace Logic.Gameplay.Rules
 
         private void Awake()
         {
-//            var grid = GetComponentInChildren<GameGrid>();
-//            grid.Size = PlayArea;
-//            grid.Gradiation = 5;
-
             _gameGrid = transform.Find("Game Grid").gameObject;
 
             Rng = new WellRng(Seed);
@@ -114,8 +113,6 @@ namespace Logic.Gameplay.Rules
             _setupHandler = new SetupHandler(this);
             _gameplayHandler = new GameplayHandler(this);
 
-            FindUiElements();
-
             RenderSettings.skybox = Skyboxes[Random.Range(0, Skyboxes.Length)];
         }
 
@@ -134,12 +131,7 @@ namespace Logic.Gameplay.Rules
 
         public void DisplayUpperText(string s)
         {
-            _upperDisplayText.text = s;
-        }
-
-        private void FindUiElements()
-        {
-            _upperDisplayText = UiCanvas.Find("Upper Display Text").GetComponent<Text>();
+            Debug.Log(s);
         }
 
         private void UpdateFlashedMessages()
@@ -202,9 +194,9 @@ namespace Logic.Gameplay.Rules
             CameraOperator.UpdateCamera();
 
             UpdateMouseLocationAndSelection();
-            
+
             _gameGrid.GetComponentInChildren<MeshRenderer>().material.SetVector("_MousePosition", MouseLocation);
-            
+
             SetTooltip();
 
             UpdateFlashedMessages();
@@ -216,25 +208,28 @@ namespace Logic.Gameplay.Rules
                     _startScreen.Update();
                     break;
                 case GamePhase.PlayerSelection:
-                    _upperDisplayText.text = "Waiting on other players";
+                    DisplayUpperText("Waiting on other players");
                     state = UpdateGameState();
                     if (state.players.Length == state.no_players)
                     {
                         Players = CreatePlayers();
+                        SetupGameWorld();
                         Phase = GamePhase.ListBuilding;
                     }
+
                     break;
                 case GamePhase.ListBuilding:
                     _listBuilder.Update();
                     break;
                 case GamePhase.Waiting:
-                    _upperDisplayText.text = "Waiting on other players";
+                    DisplayUpperText("Waiting on other players");
                     UpdateGameState();
                     Players = CreatePlayers();
                     if (Players.All(player => player.Faction != null))
                     {
                         Phase = GamePhase.Setup;
                     }
+
                     break;
                 case GamePhase.Setup:
                     _setupHandler.Update();
@@ -244,6 +239,100 @@ namespace Logic.Gameplay.Rules
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private float ClosestDistanceTo(Vector3 point, IEnumerable<Vector3> targets)
+        {
+            float minDist = float.MaxValue;
+
+            foreach (var target in targets)
+            {
+                if (target != Vector3.zero) minDist = Mathf.Min(minDist, (point - target).magnitude);
+            }
+
+            return minDist;
+        }
+
+        private Vector3 PlaceAsteroidField()
+        {
+            var asteroidField = new Vector3(Rng.NextFloat(-45, 45), 0, Rng.NextFloat(-45, 45));
+
+            var asteroidLocations = AsteroidFields.Select(field => field.Location).ToArray();
+            while (ClosestDistanceTo(asteroidField, asteroidLocations) < 25)
+            {
+                asteroidField = new Vector3(Rng.NextFloat(-45, 45), 0, Rng.NextFloat(-45, 45));
+            }
+
+            return asteroidField;
+        }
+
+        private void SetupGameWorld()
+        {
+            var guid = new Guid(CurrentGameState.id).ToByteArray();
+
+            RenderSettings.skybox = Skyboxes[guid[5] % Skyboxes.Length];
+
+            var largeAsteroidFields = guid[3] % 3 + 1;
+            var smallAsteroidFields = guid[9] % 4 + 2;
+
+            AsteroidFields = new AsteroidField[largeAsteroidFields + smallAsteroidFields];
+            
+            
+
+            for (int i = 0; i < largeAsteroidFields; i++)
+            {
+                var asteroidField = PlaceAsteroidField();
+                AsteroidFields[i] = new AsteroidField(asteroidField, 12);
+                var ring = new GameObject("Large Asteroid Field");
+                ring.transform.position = asteroidField;
+                var arc = ArcRenderer.NewArc(ring.transform, 12, 0.25f, 0, Mathf.PI * 2, 32, Color.white);
+                arc.transform.position = arc.transform.position + new Vector3(0, -5, 0);
+
+                var rockLocations = new List<Vector3>();
+
+                for (int j = 0; j < Rng.NextInt(4,10); j++)
+                {
+                    var asteroid = Asteroids[Rng.NextInt(0, Asteroids.Length-1)];
+                    var rock = Instantiate(asteroid, ring.transform);
+                    
+                    var rockLocation = (new Vector3(Rng.NextFloat(-1,1), 0, Rng.NextFloat(-1,1))).normalized * Rng.NextFloat(-10,10);
+                    while (ClosestDistanceTo(rockLocation, rockLocations) < 5f)
+                        rockLocation = (new Vector3(Rng.NextFloat(-1,1), 0, Rng.NextFloat(-1,1))).normalized * Rng.NextFloat(-10,10);
+                    rockLocations.Add(rockLocation);
+
+                    rock.transform.localPosition = rockLocation;
+                    var scale = Rng.NextFloat(1, 3);
+                    rock.transform.localScale = new Vector3(scale, scale, scale);
+                    rock.transform.rotation = Quaternion.Euler(Rng.NextFloat(0,360), Rng.NextFloat(0,360), Rng.NextFloat(0,360));
+                }
+            }
+
+            for (int i = 0; i < smallAsteroidFields; i++)
+            {
+                var asteroidField = PlaceAsteroidField();
+                AsteroidFields[i+largeAsteroidFields] = new AsteroidField(asteroidField, 8);
+                var ring = new GameObject("Small Asteroid Field");
+                ring.transform.position = asteroidField;
+                var arc = ArcRenderer.NewArc(ring.transform, 8, 0.25f, 0, Mathf.PI * 2, 32, Color.white);
+                arc.transform.position = arc.transform.position + new Vector3(0, -5, 0);
+
+                var rockLocations = new List<Vector3>();
+                for (int j = 0; j < Rng.NextInt(3,6); j++)
+                {
+                    var asteroid = Asteroids[Rng.NextInt(0, Asteroids.Length-1)];
+                    var rock = Instantiate(asteroid, ring.transform);
+
+                    var rockLocation = (new Vector3(Rng.NextFloat(-1,1), 0, Rng.NextFloat(-1,1))).normalized * Rng.NextFloat(-6.5f,6.5f);
+                    while (ClosestDistanceTo(rockLocation, rockLocations) < 2.5f)
+                        rockLocation = (new Vector3(Rng.NextFloat(-1,1), 0, Rng.NextFloat(-1,1))).normalized * Rng.NextFloat(-6.5f,6.5f);
+                    rockLocations.Add(rockLocation);
+                    
+                    rock.transform.localPosition = rockLocation;
+                    var scale = Rng.NextFloat(0.5f, 2);
+                    rock.transform.localScale = new Vector3(scale, scale, scale);
+                    rock.transform.rotation = Quaternion.Euler(Rng.NextFloat(0,360), Rng.NextFloat(0,360), Rng.NextFloat(0,360));
+                }
             }
         }
 
