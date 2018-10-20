@@ -24,7 +24,6 @@ namespace Logic.Gameplay.Rules
         private OrderedSet<int> _playOrder;
         public Dictionary<Player, List<Ship>> ShipsInInitiativeStep;
         private Player _initativePhaseStartingPlayer;
-        public List<GameObject> Arcs = new List<GameObject>();
         public RectTransform LowerBar;
         public RectTransform TurnCounter;
         private TextMeshProUGUI _turnCounter;
@@ -168,15 +167,19 @@ namespace Logic.Gameplay.Rules
                 TurnCounter = Object.Instantiate(Referee.TurnIndicator, Referee.UiCanvas);
                 FindTurnCounterComponents();
             }
-            
+
             SetTurnDisplay();
 
             switch (_phase)
             {
                 case TurnPhase.Initiative:
-                    InitiativePhase();
-                    IncrementPhase();
-                    goto case TurnPhase.Command;
+                    var initiativePhaseOver = InitiativePhase();
+                    if (initiativePhaseOver)
+                    {
+                        IncrementPhase();
+                    }
+
+                    break;
                 case TurnPhase.Command:
                     _commandPhase.Update();
                     break;
@@ -240,81 +243,71 @@ namespace Logic.Gameplay.Rules
             {
                 case TurnPhase.Initiative:
                     _initiativePhaseIndicator.color = Color.white;
-                    _initiativePhaseIndicator.rectTransform.sizeDelta = new Vector2(90,90);
+                    _initiativePhaseIndicator.rectTransform.sizeDelta = new Vector2(90, 90);
 
                     _commandPhaseIndicator.color = _inactiveTurnColor;
-                    _commandPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _commandPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _movementPhaseIndicator.color = _inactiveTurnColor;
-                    _movementPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _movementPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _actionPhaseIndicator.color = _inactiveTurnColor;
-                    _actionPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _actionPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _cleanupPhaseIndicator.color = _inactiveTurnColor;
-                    _cleanupPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _cleanupPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     break;
                 case TurnPhase.Command:
                     _commandPhaseIndicator.color = Color.white;
-                    _commandPhaseIndicator.rectTransform.sizeDelta = new Vector2(90,90);
+                    _commandPhaseIndicator.rectTransform.sizeDelta = new Vector2(90, 90);
 
                     _initiativePhaseIndicator.color = _inactiveTurnColor;
-                    _initiativePhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _initiativePhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _movementPhaseIndicator.color = _inactiveTurnColor;
-                    _movementPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _movementPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _actionPhaseIndicator.color = _inactiveTurnColor;
-                    _actionPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _actionPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _cleanupPhaseIndicator.color = _inactiveTurnColor;
-                    _cleanupPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _cleanupPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     break;
                 case TurnPhase.Movement:
                     _movementPhaseIndicator.color = Color.white;
-                    _movementPhaseIndicator.rectTransform.sizeDelta = new Vector2(90,90);
+                    _movementPhaseIndicator.rectTransform.sizeDelta = new Vector2(90, 90);
 
                     _initiativePhaseIndicator.color = _inactiveTurnColor;
-                    _initiativePhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _initiativePhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _commandPhaseIndicator.color = _inactiveTurnColor;
-                    _commandPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _commandPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _actionPhaseIndicator.color = _inactiveTurnColor;
-                    _actionPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _actionPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _cleanupPhaseIndicator.color = _inactiveTurnColor;
-                    _cleanupPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _cleanupPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     break;
                 case TurnPhase.Action:
                     _actionPhaseIndicator.color = Color.white;
-                    _actionPhaseIndicator.rectTransform.sizeDelta = new Vector2(90,90);
+                    _actionPhaseIndicator.rectTransform.sizeDelta = new Vector2(90, 90);
 
                     _initiativePhaseIndicator.color = _inactiveTurnColor;
-                    _initiativePhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _initiativePhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _commandPhaseIndicator.color = _inactiveTurnColor;
-                    _commandPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _commandPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _movementPhaseIndicator.color = _inactiveTurnColor;
-                    _movementPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _movementPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _cleanupPhaseIndicator.color = _inactiveTurnColor;
-                    _cleanupPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _cleanupPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     break;
                 case TurnPhase.Cleanup:
                     _cleanupPhaseIndicator.color = Color.white;
-                    _cleanupPhaseIndicator.rectTransform.sizeDelta = new Vector2(90,90);
+                    _cleanupPhaseIndicator.rectTransform.sizeDelta = new Vector2(90, 90);
 
                     _initiativePhaseIndicator.color = _inactiveTurnColor;
-                    _initiativePhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _initiativePhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _commandPhaseIndicator.color = _inactiveTurnColor;
-                    _commandPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _commandPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _movementPhaseIndicator.color = _inactiveTurnColor;
-                    _movementPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _movementPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     _actionPhaseIndicator.color = _inactiveTurnColor;
-                    _actionPhaseIndicator.rectTransform.sizeDelta = new Vector2(60,60);
+                    _actionPhaseIndicator.rectTransform.sizeDelta = new Vector2(60, 60);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
-            }
-        }
-
-
-        public void CircleSelectableShips()
-        {
-            if (Arcs.Count != 0) return;
-            foreach (var ship in ShipsInInitiativeStep[CurrentPlayer])
-            {
-                Arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.white));
             }
         }
 
@@ -338,29 +331,33 @@ namespace Logic.Gameplay.Rules
             return false;
         }
 
-        private void InitiativePhase()
+        private readonly List<Popup> _initiativePopups = new List<Popup>();
+
+        private bool InitiativePhase()
         {
-            foreach (var player in Referee.Players)
+            if (_initiativePopups.Count == 0)
             {
-                foreach (var ship in player.Fleet.Where(ship => ship.Alive))
+                foreach (var player in Referee.Players)
                 {
-                    ship.SetInitiative(Referee.Rng);
+                    foreach (var ship in player.Fleet.Where(ship => ship.Alive))
+                    {
+                        ship.SetInitiative(Referee.Rng);
+                        _initiativePopups.Add(Referee.Popup.Clone(string.Format("Initiative {0}", ship.Initiative),
+                            ship.transform.position + Vector3.up, 0.5f, 5));
+                    }
                 }
+
+                return false;
             }
+
+            if (_initiativePopups.Any(popup => popup != null)) return false;
+            _initiativePopups.Clear();
+            return true;
+
         }
 
         public Player CurrentPlayer;
-        private readonly Color _inactiveTurnColor = new Color(1,1,1,0.5f);
-
-        public void ClearArcs()
-        {
-            foreach (var arc in Arcs)
-            {
-                Object.Destroy(arc);
-            }
-
-            Arcs.Clear();
-        }
+        private readonly Color _inactiveTurnColor = new Color(1, 1, 1, 0.5f);
 
         public void DrawSystemsDisplay(Ship ship, Func<int, ShipSystem, int, bool> isInteractable,
             Action<int, ShipSystem, int, Image> onClick, Action<Ship> onComplete)

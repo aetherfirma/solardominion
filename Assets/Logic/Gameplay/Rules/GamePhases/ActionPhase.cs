@@ -21,6 +21,8 @@ namespace Logic.Gameplay.Rules.GamePhases
         private Ship _target;
         private ShipSystem _selectedWeapon;
         private List<int> _selectedSystems = new List<int>();
+        private readonly List<Popup> _popups = new List<Popup>();
+        private GameObject _rangeMarker;
 
         public ActionPhase(GameplayHandler gameplayHandler)
         {
@@ -53,20 +55,40 @@ namespace Logic.Gameplay.Rules.GamePhases
                 else SelectAttackTarget();
             }
         }
+        
+        private void MarkSelectableShips()
+        {
+            if (_popups.Count == 0)
+            {
+                foreach (var ship in _gameplayHandler.ShipsInInitiativeStep[_gameplayHandler.CurrentPlayer])
+                {
+                    _popups.Add(_gameplayHandler.Referee.Popup.Clone("Ready to act", ship.transform.position));
+                }
+            }
+        }
+
+        private void ClearPopups()
+        {
+            foreach (var popup in _popups)
+            {
+                popup.Destroy();
+            }
+            _popups.Clear();
+        }
 
         private void SelectActiveShip()
         {
-            _gameplayHandler.CircleSelectableShips();
+            MarkSelectableShips();
 
             if (Input.GetMouseButtonUp(0) && _gameplayHandler.Referee.MouseSelection)
             {
                 var ship = _gameplayHandler.Referee.MouseSelection.GetComponent<Ship>();
                 if (ship != null && _gameplayHandler.IsShipSelectable(ship))
                 {
-                    _gameplayHandler.ClearArcs();
+                    ClearPopups();
                     _selection = ship;
-                    _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform, 7, 0.5f, 0, Mathf.PI * 2, 64,
-                        Color.red));
+                    var cameraOperator = _gameplayHandler.Referee.CameraOperator;
+                    cameraOperator.SetCameraPosition(ship.transform.position, cameraOperator.Direction, cameraOperator.Zoom);
                     DrawActionSystemsDisplay(ship);
                 }
             }
@@ -83,11 +105,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                     {
                         _target = ship;
                         _gameplayHandler.ClearSystemsDisplay();
-                        _gameplayHandler.ClearArcs();
-                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform, 7, 0.5f, 0, Mathf.PI * 2, 64,
-                            Color.red));
-                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_target.transform, 7, 0.5f, 0, Mathf.PI * 2, 64,
-                            Color.red));
+                        // TODO: Show target better
                         BroadcastWeaponFiring(_selection, _selectedWeapon, _selectedSystems, _target);
                         _gameplayHandler.Referee.DisplayUpperText("Waiting on response");
                     }
@@ -132,9 +150,6 @@ namespace Logic.Gameplay.Rules.GamePhases
                         ResolveAttack(firingShip, shots, damage, targetShip, defenderPool);
 
                         _target = null;
-                        _gameplayHandler.ClearArcs();
-                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform, 7, 0.5f, 0, Mathf.PI * 2, 64,
-                            Color.red));
                         DrawActionSystemsDisplay(firingShip);
                     }
 
@@ -156,6 +171,11 @@ namespace Logic.Gameplay.Rules.GamePhases
                 (index, system, subsystem, image) =>
                 {
                     if (system.Type == SystemType.Composite) system = system.SubSystems[subsystem];
+                    if (_rangeMarker != null)
+                    {
+                        Object.Destroy(_rangeMarker);
+                        _rangeMarker = null;
+                    }
 
                     switch (system.Type)
                     {
@@ -166,16 +186,15 @@ namespace Logic.Gameplay.Rules.GamePhases
                                 _selectedSystems.Add(index);
                                 image.color = Color.yellow;
 
-                                var rangeRings = Object.Instantiate(_gameplayHandler.Referee.RangeRings,
+                                _rangeMarker = Object.Instantiate(_gameplayHandler.Referee.RangeRings,
                                     new Vector3(0, -3, 0), Quaternion.identity);
-                                rangeRings.GetComponent<RangeMarkers>().Setup(
+                                _rangeMarker.GetComponent<RangeMarkers>().Setup(
                                     _selectedWeapon.ShortRange,
                                     _selectedWeapon.MediumRange,
                                     _selectedWeapon.LongRange,
                                     _selection.transform.position - new Vector3(0, -3, 0),
                                     _gameplayHandler.Referee
                                 );
-                                _gameplayHandler.Arcs.Add(rangeRings);
                             }
                             else
                             {
@@ -186,9 +205,6 @@ namespace Logic.Gameplay.Rules.GamePhases
                                     if (_selectedSystems.Count == 0)
                                     {
                                         _selectedWeapon = null;
-                                        _gameplayHandler.ClearArcs();
-                                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(_selection.transform, 7, 0.5f, 0,
-                                            Mathf.PI * 2, 64, Color.red));
                                     }
                                 }
                                 else
@@ -218,7 +234,6 @@ namespace Logic.Gameplay.Rules.GamePhases
                     _selection = null;
                     _gameplayHandler.RemoveShipFromCurrentStep(selectedShip);
                     BroadcastEndOfAction(selectedShip);
-                    _gameplayHandler.ClearArcs();
                     _gameplayHandler.LowerBar.transform.Find("Text").GetComponent<Text>().text = "";
 
                     _gameplayHandler.NextPlayer();
@@ -250,8 +265,6 @@ namespace Logic.Gameplay.Rules.GamePhases
                         _gameplayHandler.Referee.DisplayUpperText(string.Format("Being fired at by {0:} {1:} shot{2:}", turn.weapon, turn.shots, turn.shots == 1 ? "" : "s"));
                         var firingShip = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
                         var targetShip = _gameplayHandler.Referee.Players.Single(p => p.Uuid == turn.target_player).Fleet.Single(s => s.ShipUuid == turn.target);
-                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(firingShip.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
-                        _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(targetShip.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
 
                         var thrustToSpend = 0;
 
@@ -294,7 +307,6 @@ namespace Logic.Gameplay.Rules.GamePhases
                                 var defenderPool = turnDefenceModifier + thrustToSpend;
 
                                 ResolveAttack(firingShip, shots, damage, targetShip, defenderPool);
-                                _gameplayHandler.ClearArcs();
                             });
 
                     }

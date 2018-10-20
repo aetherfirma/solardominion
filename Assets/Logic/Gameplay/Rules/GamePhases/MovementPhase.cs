@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Logic.Display;
 using Logic.Gameplay.Ships;
 using Logic.Network;
@@ -13,10 +14,31 @@ namespace Logic.Gameplay.Rules.GamePhases
         private GameplayHandler _gameplayHandler;
         private GameObject _movementPentagon, _thrustPentagon;
         private PentagonRenderer _movementMarker;
+        private readonly List<Popup> _popups = new List<Popup>();
 
         public MovementPhase(GameplayHandler gameplayHandler)
         {
             _gameplayHandler = gameplayHandler;
+        }
+        
+        private void MarkSelectableShips()
+        {
+            if (_popups.Count == 0)
+            {
+                foreach (var ship in _gameplayHandler.ShipsInInitiativeStep[_gameplayHandler.CurrentPlayer])
+                {
+                    _popups.Add(_gameplayHandler.Referee.Popup.Clone("Ready to move", ship.transform.position));
+                }
+            }
+        }
+
+        private void ClearPopups()
+        {
+            foreach (var popup in _popups)
+            {
+                popup.Destroy();
+            }
+            _popups.Clear();
         }
 
         public void Update()
@@ -37,8 +59,8 @@ namespace Logic.Gameplay.Rules.GamePhases
                         if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.action == TurnType.MovementPhase)
                         {
                             var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
-                            _gameplayHandler.Referee.FlashMessage(string.Format("Just recieved movement for {0:}",
-                                ship.Name()));
+                            _gameplayHandler.Referee.Popup.Clone(string.Format("Just recieved movement for {0:}",
+                                ship.Name()), ship.transform.position, 0.5f, 5);
 
                             var newPosition = new Vector3(turn.location[0], 0, turn.location[1]);
 
@@ -48,7 +70,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                             var thrust = Mathf.CeilToInt(distance.magnitude / ship.DistancePerThrust());
                             if (thrust > ship.ThrustRemaining)
                             {
-                                _gameplayHandler.Referee.FlashMessage("Cannot move here, insufficient thrust");
+                                _gameplayHandler.Referee.Popup.Clone("Cannot move here, insufficient thrust", newPosition, 0.5f, 5);
                                 return;
                             }
 
@@ -72,14 +94,14 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                 if (_selection == null)
                 {
-                    _gameplayHandler.CircleSelectableShips();
+                    MarkSelectableShips();
 
                     if (Input.GetMouseButtonUp(0) && _gameplayHandler.Referee.MouseSelection)
                     {
                         var ship = _gameplayHandler.Referee.MouseSelection.GetComponent<Ship>();
                         if (ship != null && _gameplayHandler.IsShipSelectable(ship))
                         {
-                            _gameplayHandler.ClearArcs();
+                            ClearPopups();
                             _selection = ship;
 
                             _movementPentagon =
@@ -137,7 +159,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                     {
                         if (thrust > _selection.ThrustRemaining)
                         {
-                            _gameplayHandler.Referee.FlashMessage("Cannot move here, insufficient thrust");
+                            _gameplayHandler.Referee.Popup.Clone("Cannot move here, insufficient thrust", targetLocation, 0.5f, 5);
                             return;
                         }
 
@@ -154,7 +176,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                         BroadcastMovement(_selection);
                         _gameplayHandler.RemoveShipFromCurrentStep(_selection);
                         _selection = null;
-                        _gameplayHandler.ClearArcs();
+                        ClearPopups();
                         _gameplayHandler.NextPlayer();
                     }
                 }

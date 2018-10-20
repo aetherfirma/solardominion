@@ -5,7 +5,6 @@ using Logic.Gameplay.Ships;
 using Logic.Network;
 using Logic.Utilities;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Logic.Gameplay.Rules.GamePhases
 {
@@ -13,6 +12,7 @@ namespace Logic.Gameplay.Rules.GamePhases
     {
         private Ship _selection;
         private GameplayHandler _gameplayHandler;
+        private List<Popup> _popups = new List<Popup>();
 
         public CommandPhase(GameplayHandler gameplayHandler)
         {
@@ -36,7 +36,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                         if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.action == TurnType.CommandPhase)
                         {
                             var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
-                            _gameplayHandler.Referee.FlashMessage(string.Format("Just recieved order for {0:}", ship.Name()));
+                            _gameplayHandler.Referee.Popup.Clone(string.Format("Orders received for {0}", ship.Name()), ship.transform.position, 0.5f, 5);
 
                             if (turn.order != null)
                             {
@@ -63,16 +63,18 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                 if (_selection == null)
                 {
-                    _gameplayHandler.CircleSelectableShips();
+                    MarkSelectableShips();
 
                     if (Input.GetMouseButtonUp(0) && _gameplayHandler.Referee.MouseSelection)
                     {
                         var ship = _gameplayHandler.Referee.MouseSelection.GetComponent<Ship>();
                         if (ship != null && _gameplayHandler.IsShipSelectable(ship))
                         {
-                            _gameplayHandler.ClearArcs();
+                            ClearPopups();
                             _selection = ship;
-                            _gameplayHandler.Arcs.Add(ArcRenderer.NewArc(ship.transform, 7, 0.5f, 0, Mathf.PI * 2, 64, Color.red));
+                            var cameraOperator = _gameplayHandler.Referee.CameraOperator;
+                            cameraOperator.SetCameraPosition(ship.transform.position, cameraOperator.Direction, cameraOperator.Zoom);
+                            
                             _gameplayHandler.DrawSystemsDisplay(
                                 ship,
                                 (index, system, subsystem) =>
@@ -111,7 +113,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                                     selectedShip.CalculateThrust();
                                     _gameplayHandler.RemoveShipFromCurrentStep(selectedShip);
                                     BroadcastShipCommandState(selectedShip);
-                                    _gameplayHandler.ClearArcs();
+                                    ClearPopups();
 
                                     _gameplayHandler.NextPlayer();
                                 }
@@ -120,6 +122,26 @@ namespace Logic.Gameplay.Rules.GamePhases
                     }
                 }
             }
+        }
+
+        private void MarkSelectableShips()
+        {
+            if (_popups.Count == 0)
+            {
+                foreach (var ship in _gameplayHandler.ShipsInInitiativeStep[_gameplayHandler.CurrentPlayer])
+                {
+                    _popups.Add(_gameplayHandler.Referee.Popup.Clone("Needs commands", ship.transform.position));
+                }
+            }
+        }
+
+        private void ClearPopups()
+        {
+            foreach (var popup in _popups)
+            {
+                popup.Destroy();
+            }
+            _popups.Clear();
         }
 
         private void BroadcastShipCommandState(Ship ship)

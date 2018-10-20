@@ -53,9 +53,9 @@ namespace Logic.Gameplay.Rules
                         {
                             var ship = currentPlayer.Fleet
                                 .Single(s => s.ShipUuid == turn.ship);
-                            _referee.FlashMessage(string.Format("Just recieved deployment for {0:}", ship.Name()));
                             ship.Position = new Vector3(turn.location[0], 0, turn.location[1]);
                             ship.SkipMovement();
+                            _referee.Popup.Clone(string.Format("Just recieved deployment for {0:}", ship.Name()), ship.Position, 0.5f, 5);
                             ship.Speed = turn.speed;
                             ship.transform.rotation = Quaternion.Euler(0, turn.rotation, 0);
                             ship.Deployed = true;
@@ -127,7 +127,7 @@ namespace Logic.Gameplay.Rules
 
                     if (!FindNextSetupPlayer()) _referee.Phase = GamePhase.Play;
                 }
-                else _referee.FlashMessage("Cannot set heading and speed, ship would fly off table", 10);
+                else _referee.Popup.Clone("Cannot set heading and speed, ship would fly off table", _selection.transform.position, 0.5f, 5);
             }
         }
 
@@ -141,9 +141,9 @@ namespace Logic.Gameplay.Rules
                 {
                     if (Mathf.Abs(_referee.MouseLocation.x) < _referee.PlayArea / 2f &&
                         Mathf.Abs(_referee.MouseLocation.z) < _referee.PlayArea / 2f) _headingSet = true;
-                    else _referee.FlashMessage("Cannot place ship here, out of bounds", 10);
+                    else _referee.Popup.Clone("Cannot place ship here, out of bounds", _selection.transform.position, 0.5f, 5);
                 }
-                else _referee.FlashMessage("Cannot place ship here, too close to something else", 10);
+                else _referee.Popup.Clone("Cannot place ship here, too close to something else", _selection.transform.position, 0.5f, 5);
             }
         }
 
