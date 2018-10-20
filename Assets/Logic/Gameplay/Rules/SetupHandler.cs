@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Logic.Display;
+using Logic.Gameplay.Players;
 using Logic.Gameplay.Ships;
 using Logic.Network;
 using Logic.Utilities;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace Logic.Gameplay.Rules
 {
@@ -13,6 +14,7 @@ namespace Logic.Gameplay.Rules
         private readonly Referee _referee;
         private bool _setup, _headingSet;
         private Ship _selection;
+        private List<Popup> _popups = new List<Popup>();
 
         public SetupHandler(Referee referee)
         {
@@ -25,10 +27,13 @@ namespace Logic.Gameplay.Rules
 
             var state = _referee.UpdateGameState();
 
+            var currentPlayer = _referee.Players[_referee.CurrentPlayer];
             if (_referee.CurrentPlayer == _referee.LocalPlayer)
             {
                 _referee.DisplayUpperText(string.Format("{0:} Turn To Deploy",
-                    _referee.Players[_referee.CurrentPlayer].Faction));
+                    currentPlayer.Faction));
+
+                if (_selection == null && _popups.Count == 0) MarkSelectableShips(currentPlayer);
 
                 if (_selection == null) Selection();
                 else if (!_headingSet) SetPosition();
@@ -37,7 +42,7 @@ namespace Logic.Gameplay.Rules
             else
             {
                 _referee.DisplayUpperText(string.Format("Waiting for {0:} to deploy",
-                    _referee.Players[_referee.CurrentPlayer].Faction));
+                    currentPlayer.Faction));
 
                 if (_referee.LastObservedInstruction < state.turns.Count)
                 {
@@ -46,7 +51,7 @@ namespace Logic.Gameplay.Rules
                         var turn = state.turns[i];
                         if (turn.player != _referee.PlayerUuid && turn.action == TurnType.Deploy)
                         {
-                            var ship = _referee.Players[_referee.CurrentPlayer].Fleet
+                            var ship = currentPlayer.Fleet
                                 .Single(s => s.ShipUuid == turn.ship);
                             _referee.FlashMessage(string.Format("Just recieved deployment for {0:}", ship.Name()));
                             ship.Position = new Vector3(turn.location[0], 0, turn.location[1]);
@@ -59,6 +64,17 @@ namespace Logic.Gameplay.Rules
                         _referee.LastObservedInstruction = i + 1;
                         if (!FindNextSetupPlayer()) _referee.Phase = GamePhase.Play;
                     }
+                }
+            }
+        }
+
+        private void MarkSelectableShips(Player currentPlayer)
+        {
+            foreach (var ship in currentPlayer.Fleet)
+            {
+                if (!ship.Deployed)
+                {
+                    _popups.Add(_referee.Popup.Clone("Needs to be deployed", ship.transform.position + Vector3.up * 1.5f));
                 }
             }
         }
@@ -147,6 +163,11 @@ namespace Logic.Gameplay.Rules
                 {
                     _selection = ship;
                     _referee.TooltipEnabled = false;
+                    foreach (var popup in _popups)
+                    {
+                        popup.Destroy();
+                    }
+                    _popups.Clear();
                 }
             }
         }

@@ -20,7 +20,7 @@ namespace Logic.Display
 
         private void Update()
         {
-            Canvas.sizeDelta = new Vector2(UIText.preferredWidth + 60, UIText.preferredHeight + 90);
+            Canvas.sizeDelta = new Vector2(UIText.preferredWidth + 20, UIText.preferredHeight + 90);
             if (Rising)
             {
                 _lifetime += Time.deltaTime;

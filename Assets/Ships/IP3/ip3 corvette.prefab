@@ -206,8 +206,8 @@ MonoBehaviour:
   - System: {fileID: 114960580605481350, guid: d045f639a48c83344bb7e7151e68de2d, type: 2}
     X: 0
     Y: 3
-    Width: 1
-    Height: 2
+    Width: 2
+    Height: 1
   - System: {fileID: 114885478457026964, guid: 38d2caaa70509c04baad9274b5af4d2f, type: 2}
     X: 0
     Y: 1

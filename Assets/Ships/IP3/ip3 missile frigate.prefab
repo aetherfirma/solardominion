@@ -285,7 +285,7 @@ MonoBehaviour:
     X: 3
     Y: 0
     Width: 1
-    Height: 5
+    Height: 4
   - System: {fileID: 114906593097577518, guid: 2dd1f6156adb94840b9dd99f51e4fe0c, type: 2}
     X: 4
     Y: 0
