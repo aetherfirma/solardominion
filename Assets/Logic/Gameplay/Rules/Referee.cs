@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Logic.Display;
@@ -59,7 +60,6 @@ namespace Logic.Gameplay.Rules
         private GameplayHandler _gameplayHandler;
 
         public GameResponse CurrentGameState;
-        public float LastNetworkUpdate;
         public float UpdateInterval = 5;
 
         public Vector3 MouseLocation;
@@ -72,12 +72,11 @@ namespace Logic.Gameplay.Rules
         public void SetGameState(GameResponse response)
         {
             CurrentGameState = response;
-            LastNetworkUpdate = Time.time;
         }
 
-        public GameResponse UpdateGameState(bool force = false)
+        public IEnumerator GameStateCoroutine()
         {
-            if (force || Time.time - LastNetworkUpdate > UpdateInterval)
+            for (;;)
             {
                 SimpleRequest.Get(
                     ServerUrl + "/game/" + GameUuid,
@@ -85,9 +84,8 @@ namespace Logic.Gameplay.Rules
                     www => FlashMessage("There was a server error (" + www.responseCode + ")\n" + www.error),
                     www => FlashMessage("There was a network error\n" + www.error)
                 );
+                yield return new WaitForSecondsRealtime(UpdateInterval);
             }
-
-            return CurrentGameState;
         }
 
         private Queue<FlashedMessage> _flashedMessages = new Queue<FlashedMessage>();
@@ -203,7 +201,6 @@ namespace Logic.Gameplay.Rules
 
             UpdateFlashedMessages();
 
-            GameResponse state;
             switch (Phase)
             {
                 case GamePhase.GameCreation:
@@ -211,8 +208,7 @@ namespace Logic.Gameplay.Rules
                     break;
                 case GamePhase.PlayerSelection:
                     DisplayUpperText("Waiting on other players");
-                    state = UpdateGameState();
-                    if (state.players.Length == state.no_players)
+                    if (CurrentGameState.players.Length == CurrentGameState.no_players)
                     {
                         Players = CreatePlayers();
                         SetupGameWorld();
@@ -225,7 +221,6 @@ namespace Logic.Gameplay.Rules
                     break;
                 case GamePhase.Waiting:
                     DisplayUpperText("Waiting on other players");
-                    UpdateGameState();
                     Players = CreatePlayers();
                     if (Players.All(player => player.Faction != null))
                     {

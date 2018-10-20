@@ -62,6 +62,7 @@ namespace Logic.Gameplay.Rules
                 _referee.FlashMessage("You have joined game " + _referee.GameUuid);
                 _referee.Phase = GamePhase.PlayerSelection;
                 _referee.Rng = new WellRng(response.seed);
+                _referee.StartCoroutine(_referee.GameStateCoroutine());
                 Destroy();
             }
         }
@@ -79,6 +80,7 @@ namespace Logic.Gameplay.Rules
                     _referee.FlashMessage("You have joined game " + _referee.GameUuid);
                     _referee.Phase = GamePhase.PlayerSelection;
                     _referee.Rng = new WellRng(response.game.seed);
+                    _referee.StartCoroutine(_referee.GameStateCoroutine());
                     Destroy();
                 },
                 www => _referee.FlashMessage("There was a server error (" + www.responseCode +  ") creating a game\n"+www.error),

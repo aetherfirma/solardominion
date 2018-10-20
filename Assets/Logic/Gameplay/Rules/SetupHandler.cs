@@ -25,7 +25,7 @@ namespace Logic.Gameplay.Rules
         {
             if (!_setup) Setup();
 
-            var state = _referee.UpdateGameState();
+            var state = _referee.CurrentGameState;
 
             var currentPlayer = _referee.Players[_referee.CurrentPlayer];
             if (_referee.CurrentPlayer == _referee.LocalPlayer)

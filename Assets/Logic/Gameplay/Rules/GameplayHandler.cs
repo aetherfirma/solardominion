@@ -313,7 +313,7 @@ namespace Logic.Gameplay.Rules
 
         public bool UpdateStateAndUpdateInitiative(out GameResponse state)
         {
-            state = Referee.UpdateGameState();
+            state = Referee.CurrentGameState;
 
             while (ShipsInInitiativeStep == null || ShipsInInitiativeStep.Count == 0)
             {

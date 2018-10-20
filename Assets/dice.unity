@@ -629,6 +629,7 @@ MonoBehaviour:
   RangeRings: {fileID: 1335432483830970, guid: dfed3e2c3095f9641b4c21eb77701be8, type: 2}
   TextPrefab: {fileID: 114028964508136352, guid: 3325d97a304daac4c93d5b48b6f277e7,
     type: 2}
+  Popup: {fileID: 114413447236850522, guid: 327cad5049917e34b9b5d0ed50be4824, type: 2}
   LowerButton: {fileID: 114081545369597916, guid: db65a7400de68ed41af2b2950c965ec6,
     type: 2}
   SelectionPanel: {fileID: 224349124420606780, guid: 0c645ca6c8705584a91d67870ef995c0,
@@ -641,6 +642,10 @@ MonoBehaviour:
     type: 2}
   LowerBar: {fileID: 224473733009599050, guid: 8f708a39d146b7e41a5b464265ac8ace, type: 2}
   TurnIndicator: {fileID: 224345576270980356, guid: ce1f5c4db906a2449b75e8497238039c,
+    type: 2}
+  FullArrow: {fileID: 224099233743432342, guid: 66b551ce41f3320478f90db2b5f048db,
+    type: 2}
+  OutlineArrow: {fileID: 224936603884830080, guid: cb31388fac5efef4d9dd93e165503241,
     type: 2}
   ButtonSprite: {fileID: 21300000, guid: 5f950a0a67b6a9247b6dab23e579898e, type: 3}
   StandardFont: {fileID: 12800000, guid: a54212e00584c644a81a59318083efa3, type: 3}
