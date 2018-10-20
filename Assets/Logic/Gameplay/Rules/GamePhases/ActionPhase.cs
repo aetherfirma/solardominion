@@ -318,17 +318,40 @@ namespace Logic.Gameplay.Rules.GamePhases
 
         private void ResolveAttack(Ship firingShip, int shots, int damage, Ship targetShip, int defenderPool)
         {
-            var attackerDice = _gameplayHandler.Referee.Rng.D6(shots).Successes(firingShip.Training);
-            var defenderDice = _gameplayHandler.Referee.Rng.D6(defenderPool).Successes(targetShip.Training);
-            var result = attackerDice - defenderDice;
+            var attackerResults = _gameplayHandler.Referee.Rng.D6(shots);
+            var attackerSuccesses = attackerResults.Successes(firingShip.Training);
+            
+            _gameplayHandler.Referee.Popup.Clone(
+                string.Format(
+                    "{0} has rolled {1} for {2} success{3}", 
+                    firingShip.Name(), 
+                    string.Join(", ", attackerResults.Select(v => v.ToString()).ToArray()), 
+                    attackerSuccesses, 
+                    attackerSuccesses == 1 ? "" : "s"
+                ),
+                firingShip.Position, 0.5f, 5
+            );
+            
+            var defenderResults = _gameplayHandler.Referee.Rng.D6(defenderPool);
+            var defenderSuccesses = defenderResults.Successes(targetShip.Training);
+            var result = attackerSuccesses - defenderSuccesses;
             if (result > 0)
             {
                 var totalDamage = result * damage;
                 targetShip.TakeDamage(_gameplayHandler.Referee.Rng, totalDamage);
-                _gameplayHandler.Referee.FlashMessage(string.Format("{0:} has taken {1:} damage{2:}", targetShip.Name(), totalDamage,
-                    targetShip.Alive ? "" : " and was destroyed"));
                 if (targetShip.Alive)
                 {
+                    _gameplayHandler.Referee.Popup.Clone(
+                        string.Format(
+                            "{0} has rolled {1} for {2} success{3}, taking {4} damage", 
+                            targetShip.Name(), 
+                            string.Join(", ", defenderResults.Select(v => v.ToString()).ToArray()), 
+                            defenderSuccesses, 
+                            defenderSuccesses == 1 ? "" : "s",
+                            totalDamage
+                        ),
+                        targetShip.Position, 0.5f, 5
+                    );
                     for (var i = 0; i < totalDamage; i++)
                     {
                         Object.Instantiate(_gameplayHandler.Referee.ShipHitExplosion, targetShip.transform.position + Random.onUnitSphere,
@@ -337,12 +360,31 @@ namespace Logic.Gameplay.Rules.GamePhases
                 }
                 else
                 {
+                    _gameplayHandler.Referee.Popup.Clone(
+                        string.Format(
+                            "{0} has rolled {1} for {2} success{3} and was destroyed", 
+                            targetShip.Name(), 
+                            string.Join(", ", defenderResults.Select(v => v.ToString()).ToArray()), 
+                            defenderSuccesses, 
+                            defenderSuccesses == 1 ? "" : "s"
+                        ),
+                        targetShip.Position, 0.5f, 5
+                    );
                    _gameplayHandler.DestroyShip(targetShip);
                 }
             }
             else
             {
-                _gameplayHandler.Referee.FlashMessage(string.Format("{0:} has taken no damage", targetShip.Name()));
+                _gameplayHandler.Referee.Popup.Clone(
+                    string.Format(
+                        "{0} has rolled {1} for {2} success{3} and took no damage", 
+                        targetShip.Name(), 
+                        string.Join(", ", defenderResults.Select(v => v.ToString()).ToArray()), 
+                        defenderSuccesses, 
+                        defenderSuccesses == 1 ? "" : "s"
+                    ),
+                    targetShip.Position, 0.5f, 5
+                );
             }
         }
 
