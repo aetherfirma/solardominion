@@ -108,6 +108,11 @@ namespace Logic.Gameplay.Rules.GamePhases
                         // TODO: Show target better
                         BroadcastWeaponFiring(_selection, _selectedWeapon, _selectedSystems, _target);
                         _gameplayHandler.Referee.DisplayUpperText("Waiting on response");
+                        if (_rangeMarker != null)
+                        {
+                            Object.Destroy(_rangeMarker);
+                            _rangeMarker = null;
+                        }
                     }
                     else
                     {
@@ -171,11 +176,6 @@ namespace Logic.Gameplay.Rules.GamePhases
                 (index, system, subsystem, image) =>
                 {
                     if (system.Type == SystemType.Composite) system = system.SubSystems[subsystem];
-                    if (_rangeMarker != null)
-                    {
-                        Object.Destroy(_rangeMarker);
-                        _rangeMarker = null;
-                    }
 
                     switch (system.Type)
                     {
@@ -205,6 +205,11 @@ namespace Logic.Gameplay.Rules.GamePhases
                                     if (_selectedSystems.Count == 0)
                                     {
                                         _selectedWeapon = null;
+                                        if (_rangeMarker != null)
+                                        {
+                                            Object.Destroy(_rangeMarker);
+                                            _rangeMarker = null;
+                                        }
                                     }
                                 }
                                 else
@@ -235,6 +240,11 @@ namespace Logic.Gameplay.Rules.GamePhases
                     _gameplayHandler.RemoveShipFromCurrentStep(selectedShip);
                     BroadcastEndOfAction(selectedShip);
                     _gameplayHandler.LowerBar.transform.Find("Text").GetComponent<Text>().text = "";
+                    if (_rangeMarker != null)
+                    {
+                        Object.Destroy(_rangeMarker);
+                        _rangeMarker = null;
+                    }
 
                     _gameplayHandler.NextPlayer();
                 }
