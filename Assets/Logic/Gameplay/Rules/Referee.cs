@@ -34,6 +34,7 @@ namespace Logic.Gameplay.Rules
         public int PointsLimit;
         public GameObject RangeRings;
         public TextMeshPro TextPrefab;
+        public Popup Popup;
 
         private Vector3? _lastRightMousePos, _lastMiddleMousePos;
 
