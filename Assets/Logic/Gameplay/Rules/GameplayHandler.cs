@@ -447,7 +447,7 @@ namespace Logic.Gameplay.Rules
 
         public GameObject CreateButton(Vector2 position, Vector2 size, string buttonText, Action onClick)
         {
-            var done = new GameObject("done button", typeof(Image), typeof(Button), typeof(RectTransform));
+            var done = new GameObject("done button", typeof(Image), typeof(Button));
             done.SetAsChild(LowerBar);
 
             var rectTransform = done.GetComponent<RectTransform>();
@@ -468,7 +468,7 @@ namespace Logic.Gameplay.Rules
 
         public GameObject CreateText(Transform parent, Vector2 size, string buttonText)
         {
-            var textObj = new GameObject("Text", typeof(Text), typeof(RectTransform));
+            var textObj = new GameObject("Text", typeof(Text));
             textObj.SetAsChild(parent);
 
             var component = textObj.GetComponent<RectTransform>();

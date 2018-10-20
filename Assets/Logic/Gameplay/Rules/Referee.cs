@@ -47,6 +47,7 @@ namespace Logic.Gameplay.Rules
         public RectTransform FactionSelection;
         public RectTransform LowerBar;
         public RectTransform TurnIndicator;
+        public RectTransform FullArrow, OutlineArrow;
         public Sprite ButtonSprite;
         public Font StandardFont;
         public MessageTooltip Tooltip;
