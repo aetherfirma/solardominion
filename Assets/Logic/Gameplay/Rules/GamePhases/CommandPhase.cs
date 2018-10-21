@@ -101,7 +101,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                                 selectedShip =>
                                 {
                                     if (selectedShip.Systems.Where((t, i) =>
-                                        t.System.Type == SystemType.Composite && selectedShip.Damage[i] && selectedShip.Subsystem[i] == -1).Any())
+                                        t.System.Type == SystemType.Composite && !selectedShip.Damage[i] && selectedShip.Subsystem[i] == -1).Any())
                                     {
                                         _gameplayHandler.Referee.FlashMessage(
                                             "All composite systems must be set to one of their options");

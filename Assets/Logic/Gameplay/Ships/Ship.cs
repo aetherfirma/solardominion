@@ -93,17 +93,25 @@ namespace Logic.Gameplay.Ships
         public void CalculateThrust()
         {
             ThrustRemaining = Systems
-                .Select((system, index) =>
-                    system.System.Type == SystemType.Composite ? system.System.SubSystems[Subsystem[index]] : system.System)
+                .Select(GetSystemOrSubsystem)
                 .Where(system => system.Type == SystemType.Engine)
                 .Sum(system => system.Thrust);
+        }
+
+        private ShipSystem GetSystemOrSubsystem(ShipSystemPosition system, int index)
+        {
+            if (system.System.Type == SystemType.Composite)
+            {
+                if (Damage[index]) return system.System;
+                return system.System.SubSystems[Subsystem[index]];
+            }
+            return system.System;
         }
 
         public int CalculateDefensiveModifier()
         {
             return Systems
-                .Select((system, index) =>
-                    system.System.Type == SystemType.Composite ? system.System.SubSystems[Subsystem[index]] : system.System)
+                .Select(GetSystemOrSubsystem)
                 .Where(system => system.Type == SystemType.Defence)
                 .Sum(system => system.Defence);
         }
