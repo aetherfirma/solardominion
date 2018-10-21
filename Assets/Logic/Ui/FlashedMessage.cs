@@ -14,7 +14,7 @@ namespace Logic.Ui
             Transform = Object.Instantiate(uiElement, parent);
             var component = Transform.Find("Message").GetComponent<Text>();
             component.text = message;
-            Transform.sizeDelta = new Vector2(Transform.sizeDelta.x, component.preferredHeight + 20);
+            Transform.sizeDelta = new Vector2(Transform.sizeDelta.x, component.preferredHeight + 25);
 //            if (icon != null) 
         }
     }
