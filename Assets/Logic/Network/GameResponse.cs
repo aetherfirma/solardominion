@@ -7,10 +7,46 @@ using Logic.Utilities;
 namespace Logic.Network
 {
     [Serializable]
+    public class GameListResponse
+    {
+        public string[] games;
+
+        public static GameListResponse FromJson(string json)
+        {
+            return StringSerializationAPI.Deserialize<GameListResponse>(json);
+        }
+    }
+
+    [Serializable]
+    public class WaitingGame
+    {
+        public string id, scenario;
+        public string[] players;
+        public float started;
+        public int points_limit;
+
+        public static WaitingGame FromJson(string json)
+        {
+            return StringSerializationAPI.Deserialize<WaitingGame>(json);
+        }
+    }
+
+    [Serializable]
+    public class WaitingResponse
+    {
+        public WaitingGame[] games;
+
+        public static WaitingResponse FromJson(string json)
+        {
+            return StringSerializationAPI.Deserialize<WaitingResponse>(json);
+        }
+    }
+    
+    [Serializable]
     public class GameResponse
     {
         public string id, scenario, seed;
-        public int no_players;
+        public int no_players, points_limit;
         public string[] players;
         public float started, modified;
         public Dictionary<string, FleetJson> rosters;

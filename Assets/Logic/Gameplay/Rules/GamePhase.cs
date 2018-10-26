@@ -2,7 +2,10 @@
 {
     public enum GamePhase
     {
-        GameCreation,
+        Login,
+        MainMenu,
+        NewGame,
+        JoinGame,
         PlayerSelection,
         ListBuilding,
         Waiting,

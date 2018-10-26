@@ -37,6 +37,8 @@ namespace Logic.Gameplay.Rules
         public TextMeshPro TextPrefab;
         public Popup Popup;
 
+        public string Username, Password;
+
         private Vector3? _lastRightMousePos, _lastMiddleMousePos;
 
         public Plane PlaySurface;
@@ -45,6 +47,10 @@ namespace Logic.Gameplay.Rules
         public RectTransform SelectionPanel;
         public RectTransform FlashedMessageElement;
         public RectTransform StartScreen;
+        public RectTransform LoginScreen;
+        public RectTransform ServerBrowser;
+        public RectTransform ServerBrowserItem;
+        public RectTransform NewGameScreen;
         public RectTransform FactionSelection;
         public RectTransform LowerBar;
         public RectTransform TurnIndicator;
@@ -108,6 +114,9 @@ namespace Logic.Gameplay.Rules
             PlaySurface = new Plane(Vector3.up, Vector3.zero);
             Scenario = Scenario.Confrontation;
 
+            _loginScreen = new LoginScreen(this);
+            _newGameScreen = new NewGameScreen(this);
+            _joinGameScreen = new JoinGameScreen(this);
             _startScreen = new StartScreen(this);
             _listBuilder = new ListBuilder(this);
             _setupHandler = new SetupHandler(this);
@@ -203,8 +212,17 @@ namespace Logic.Gameplay.Rules
 
             switch (Phase)
             {
-                case GamePhase.GameCreation:
+                case GamePhase.Login:
+                    _loginScreen.Update();
+                    break;
+                case GamePhase.MainMenu:
                     _startScreen.Update();
+                    break;
+                case GamePhase.NewGame:
+                    _newGameScreen.Update();
+                    break;
+                case GamePhase.JoinGame:
+                    _joinGameScreen.Update();
                     break;
                 case GamePhase.PlayerSelection:
                     DisplayUpperText("Waiting on other players");
@@ -335,6 +353,9 @@ namespace Logic.Gameplay.Rules
 
         private Tooltip _tooltip;
         public bool TooltipEnabled = true;
+        private LoginScreen _loginScreen;
+        private NewGameScreen _newGameScreen;
+        private JoinGameScreen _joinGameScreen;
 
         private void SetTooltip()
         {

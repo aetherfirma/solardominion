@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Logic.Maths;
 using UnityEngine;
+using UnityEngine.Networking;
 using Object = UnityEngine.Object;
 
 namespace Logic.Utilities
@@ -30,22 +32,30 @@ namespace Logic.Utilities
 
         public static GameObject[] FindChildrenWithTag(this GameObject gameObject, string tag)
         {
-            return (from Transform transform in gameObject.transform where transform.gameObject.CompareTag(tag) select transform.gameObject).ToArray();
+            return (from Transform transform in gameObject.transform
+                where transform.gameObject.CompareTag(tag)
+                select transform.gameObject).ToArray();
         }
 
         public static GameObject[] FindChildrenWithName(this GameObject gameObject, string name)
         {
-            return (from Transform transform in gameObject.transform where transform.gameObject.name == name select transform.gameObject).ToArray();
+            return (from Transform transform in gameObject.transform
+                where transform.gameObject.name == name
+                select transform.gameObject).ToArray();
         }
 
         public static GameObject[] FindChildrenWithStringInName(this GameObject gameObject, string fragment)
         {
-            return (from Transform transform in gameObject.transform where transform.gameObject.name.Contains(fragment) select transform.gameObject).ToArray();
+            return (from Transform transform in gameObject.transform
+                where transform.gameObject.name.Contains(fragment)
+                select transform.gameObject).ToArray();
         }
 
         public static GameObject[] FindChildrenWithoutStringInName(this GameObject gameObject, string fragment)
         {
-            return (from Transform transform in gameObject.transform where !transform.gameObject.name.Contains(fragment) select transform.gameObject).ToArray();
+            return (from Transform transform in gameObject.transform
+                where !transform.gameObject.name.Contains(fragment)
+                select transform.gameObject).ToArray();
         }
 
         public static TSource Random<TSource>(this IEnumerable<TSource> source, WellRng rng)
@@ -81,6 +91,12 @@ namespace Logic.Utilities
         public static int Successes(this int[] rolls, int training)
         {
             return rolls.Count(r => r >= training);
+        }
+
+        public static void BasicAuth(this UnityWebRequest request, string username, string password)
+        {
+            request.SetRequestHeader("Authorization",
+                string.Format("Basic {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", username, password)))));
         }
     }
 

@@ -168,7 +168,9 @@ namespace Logic.Gameplay.Rules.GamePhases
             wwwForm.AddField("player", _gameplayHandler.Referee.PlayerUuid);
             wwwForm.AddField("turn", StringSerializationAPI.Serialize<Turn>(turn));
 
-            SimpleRequest.Post(_gameplayHandler.Referee.ServerUrl + "/game/" + _gameplayHandler.Referee.GameUuid + "/turn", wwwForm,
+            SimpleRequest.Post(_gameplayHandler.Referee.ServerUrl + "/game/" + _gameplayHandler.Referee.GameUuid + "/turn", 
+                _gameplayHandler.Referee.Username, _gameplayHandler.Referee.Password,
+                wwwForm,
                 www =>
                 {
                     var response = GameResponse.FromJson(www.downloadHandler.text);

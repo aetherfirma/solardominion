@@ -5,6 +5,7 @@ using Logic.Gameplay.Players;
 using Logic.Gameplay.Ships;
 using Logic.Maths;
 using Logic.Network;
+using Logic.Utilities;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -68,7 +69,7 @@ namespace Logic.Gameplay.Rules
                     wwwForm.AddField("roster", _referee.Players[_referee.LocalPlayer].FleetJson());
 
                     SimpleRequest.Post(
-                        _referee.ServerUrl + "/game/" + _referee.GameUuid + "/roster", wwwForm,
+                        _referee.ServerUrl + "/game/" + _referee.GameUuid + "/roster", _referee.Username, _referee.Password, wwwForm,
                         www =>
                         {
                             _referee.SetGameState(GameResponse.FromJson(www.downloadHandler.text));

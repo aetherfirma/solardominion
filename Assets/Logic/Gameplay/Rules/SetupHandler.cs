@@ -55,7 +55,8 @@ namespace Logic.Gameplay.Rules
                                 .Single(s => s.ShipUuid == turn.ship);
                             ship.Position = new Vector3(turn.location[0], 0, turn.location[1]);
                             ship.SkipMovement();
-                            _referee.Popup.Clone(string.Format("Just recieved deployment for {0:}", ship.Name()), ship.Position, 0.5f, 5);
+                            _referee.Popup.Clone(string.Format("Just recieved deployment for {0:}", ship.Name()),
+                                ship.Position, 0.5f, 5);
                             ship.Speed = turn.speed;
                             ship.transform.rotation = Quaternion.Euler(0, turn.rotation, 0);
                             ship.Deployed = true;
@@ -74,7 +75,8 @@ namespace Logic.Gameplay.Rules
             {
                 if (!ship.Deployed)
                 {
-                    _popups.Add(_referee.Popup.Clone("Needs to be deployed", ship.transform.position + Vector3.up * 1.5f));
+                    _popups.Add(_referee.Popup.Clone("Needs to be deployed",
+                        ship.transform.position + Vector3.up * 1.5f));
                 }
             }
         }
@@ -96,7 +98,8 @@ namespace Logic.Gameplay.Rules
             wwwForm.AddField("turn", StringSerializationAPI.Serialize<Turn>(turn));
 
             SimpleRequest.Post(
-                _referee.ServerUrl + "/game/" + _referee.GameUuid + "/turn", wwwForm,
+                _referee.ServerUrl + "/game/" + _referee.GameUuid + "/turn", _referee.Username, _referee.Password,
+                wwwForm,
                 www =>
                 {
                     var response = GameResponse.FromJson(www.downloadHandler.text);
@@ -127,7 +130,9 @@ namespace Logic.Gameplay.Rules
 
                     if (!FindNextSetupPlayer()) _referee.Phase = GamePhase.Play;
                 }
-                else _referee.Popup.Clone("Cannot set heading and speed, ship would fly off table", _selection.transform.position, 0.5f, 5);
+                else
+                    _referee.Popup.Clone("Cannot set heading and speed, ship would fly off table",
+                        _selection.transform.position, 0.5f, 5);
             }
         }
 
@@ -141,9 +146,13 @@ namespace Logic.Gameplay.Rules
                 {
                     if (Mathf.Abs(_referee.MouseLocation.x) < _referee.PlayArea / 2f &&
                         Mathf.Abs(_referee.MouseLocation.z) < _referee.PlayArea / 2f) _headingSet = true;
-                    else _referee.Popup.Clone("Cannot place ship here, out of bounds", _selection.transform.position, 0.5f, 5);
+                    else
+                        _referee.Popup.Clone("Cannot place ship here, out of bounds", _selection.transform.position,
+                            0.5f, 5);
                 }
-                else _referee.Popup.Clone("Cannot place ship here, too close to something else", _selection.transform.position, 0.5f, 5);
+                else
+                    _referee.Popup.Clone("Cannot place ship here, too close to something else",
+                        _selection.transform.position, 0.5f, 5);
             }
         }
 
@@ -167,6 +176,7 @@ namespace Logic.Gameplay.Rules
                     {
                         popup.Destroy();
                     }
+
                     _popups.Clear();
                 }
             }

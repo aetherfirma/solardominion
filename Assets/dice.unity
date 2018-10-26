@@ -630,6 +630,8 @@ MonoBehaviour:
   TextPrefab: {fileID: 114028964508136352, guid: 3325d97a304daac4c93d5b48b6f277e7,
     type: 2}
   Popup: {fileID: 114413447236850522, guid: 327cad5049917e34b9b5d0ed50be4824, type: 2}
+  Username: 
+  Password: 
   LowerButton: {fileID: 114081545369597916, guid: db65a7400de68ed41af2b2950c965ec6,
     type: 2}
   SelectionPanel: {fileID: 224349124420606780, guid: 0c645ca6c8705584a91d67870ef995c0,
@@ -637,6 +639,14 @@ MonoBehaviour:
   FlashedMessageElement: {fileID: 224035562435574832, guid: e0e5bc9c5e249f043b721c63e92a4144,
     type: 2}
   StartScreen: {fileID: 224988121345666734, guid: ba4f05e674e278a4ca0ff1415b7c196e,
+    type: 2}
+  LoginScreen: {fileID: 224524275910313674, guid: e18eb66bfcacc3e4b928a6a88e513a92,
+    type: 2}
+  ServerBrowser: {fileID: 224743804492929012, guid: cc630d75646bbd44f81f1eb86f45a758,
+    type: 2}
+  ServerBrowserItem: {fileID: 224751202474223078, guid: 33c73cb557cf21d428345cad5a947a69,
+    type: 2}
+  NewGameScreen: {fileID: 224260234397352264, guid: 70b8ad084d7457e41b8920f515351d5f,
     type: 2}
   FactionSelection: {fileID: 224681752900203300, guid: be1da53338105d348b540bc44d9440d8,
     type: 2}
@@ -656,11 +666,11 @@ MonoBehaviour:
     scenario: 
     seed: 
     no_players: 0
+    points_limit: 0
     players: []
     started: 0
     modified: 0
     turns: []
-  LastNetworkUpdate: 0
   UpdateInterval: 2
   MouseLocation: {x: 0, y: 0, z: 0}
   MouseSelection: {fileID: 0}
