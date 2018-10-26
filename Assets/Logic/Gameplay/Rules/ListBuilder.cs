@@ -112,7 +112,7 @@ namespace Logic.Gameplay.Rules
                         selection.Find("Buy Button").gameObject.GetComponent<Button>().onClick.AddListener(delegate
                         {
                             // give some kind of feedback
-                            if (_referee.Scenario.PointsLimit - _referee.Players[_referee.LocalPlayer].FleetCost() <
+                            if (_referee.CurrentGameState.points_limit - _referee.Players[_referee.LocalPlayer].FleetCost() <
                                 ship.CalculateCost(unmodifiedTraining)) return;
 
                             var oldLength = _referee.Players[_referee.LocalPlayer].Fleet.Length;
@@ -165,7 +165,7 @@ namespace Logic.Gameplay.Rules
             }
 
             _referee.DisplayUpperText(string.Format("{0:} Points Remaining",
-                _referee.Scenario.PointsLimit - _referee.Players[_referee.LocalPlayer].FleetCost()));
+                _referee.CurrentGameState.points_limit - _referee.Players[_referee.LocalPlayer].FleetCost()));
         }
 
         private void ClearItems()
