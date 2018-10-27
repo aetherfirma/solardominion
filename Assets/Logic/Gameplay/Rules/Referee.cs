@@ -52,6 +52,7 @@ namespace Logic.Gameplay.Rules
         public RectTransform ServerBrowserItem;
         public RectTransform NewGameScreen;
         public RectTransform FactionSelection;
+        public RectTransform PauseMenu;
         public RectTransform LowerBar;
         public RectTransform TurnIndicator;
         public RectTransform FullArrow, OutlineArrow;
@@ -64,6 +65,7 @@ namespace Logic.Gameplay.Rules
         private SetupHandler _setupHandler;
         private StartScreen _startScreen;
         private GameplayHandler _gameplayHandler;
+        private PauseHandler _pauseHandler;
 
         public GameResponse CurrentGameState;
         public float UpdateInterval = 5;
@@ -121,6 +123,7 @@ namespace Logic.Gameplay.Rules
             _listBuilder = new ListBuilder(this);
             _setupHandler = new SetupHandler(this);
             _gameplayHandler = new GameplayHandler(this);
+            _pauseHandler = new PauseHandler(this);
 
             RenderSettings.skybox = Skyboxes[Random.Range(0, Skyboxes.Length)];
         }
@@ -209,6 +212,8 @@ namespace Logic.Gameplay.Rules
             SetTooltip();
 
             UpdateFlashedMessages();
+            
+            _pauseHandler.Update();
 
             switch (Phase)
             {
