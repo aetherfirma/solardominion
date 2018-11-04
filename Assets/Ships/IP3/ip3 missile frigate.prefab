@@ -297,7 +297,8 @@ MonoBehaviour:
     Width: 1
     Height: 2
   UUID: ' 4aeba8fc-2e71-4049-86f2-ee95ea645949'
-  ShipClass: 
+  ShipClass: Union
+  ClassVariant: Missile
   Faction: 1
   ShipUuid: 
   Damage: 

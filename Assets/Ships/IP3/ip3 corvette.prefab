@@ -224,7 +224,8 @@ MonoBehaviour:
     Width: 1
     Height: 4
   UUID: 5faec46d-02f6-4c77-a44f-4b85c29cff79
-  ShipClass: 
+  ShipClass: County
+  ClassVariant: 
   Faction: 1
   ShipUuid: 
   Damage: 

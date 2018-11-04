@@ -89,9 +89,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                                             _gameplayHandler.Referee.FlashMessage(string.Format("Set {0:} to {1:}", system.name,
                                                 system.SubSystems[ship.Subsystem[index]].name));
                                             var texture2D = system.SubSystems[ship.Subsystem[index]].Icon;
-                                            image.sprite = Sprite.Create(texture2D,
-                                                new Rect(0, 0, texture2D.width, texture2D.height),
-                                                new Vector2(texture2D.width / 2f, texture2D.height / 2f));
+                                            image.sprite = texture2D;
                                             break;
                                         case SystemType.Command:
                                             _gameplayHandler.Referee.FlashMessage("Would add an order");

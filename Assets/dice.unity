@@ -650,6 +650,8 @@ MonoBehaviour:
     type: 2}
   FactionSelection: {fileID: 224681752900203300, guid: be1da53338105d348b540bc44d9440d8,
     type: 2}
+  PauseMenu: {fileID: 224852908853622696, guid: a542ce08de9658e419bfde56feb57bb3,
+    type: 2}
   LowerBar: {fileID: 224473733009599050, guid: 8f708a39d146b7e41a5b464265ac8ace, type: 2}
   TurnIndicator: {fileID: 224345576270980356, guid: ce1f5c4db906a2449b75e8497238039c,
     type: 2}

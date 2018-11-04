@@ -237,7 +237,8 @@ MonoBehaviour:
     Width: 1
     Height: 2
   UUID: 02aeeaa7-744a-4e60-8b2e-5ed3ebbc0335
-  ShipClass: 
+  ShipClass: Planetary
+  ClassVariant: 
   Faction: 0
   ShipUuid: 
   Damage: 

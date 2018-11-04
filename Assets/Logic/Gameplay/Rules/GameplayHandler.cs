@@ -386,15 +386,11 @@ namespace Logic.Gameplay.Rules
                 if (system.System.Type == SystemType.Composite && subsystem > -1)
                 {
                     var texture2D = system.System.SubSystems[subsystem].Icon;
-                    image.sprite = Sprite.Create(texture2D,
-                        new Rect(0, 0, texture2D.width, texture2D.height),
-                        new Vector2(texture2D.width / 2f, texture2D.height / 2f));
+                    image.sprite = system.System.SubSystems[subsystem].Icon;
                 }
                 else
                 {
-                    image.sprite = Sprite.Create(system.System.Icon,
-                        new Rect(0, 0, system.System.Icon.width, system.System.Icon.height),
-                        new Vector2(system.System.Icon.width / 2f, system.System.Icon.height / 2f));
+                    image.sprite = system.System.Icon;
                 }
 
                 button = icon.GetComponent<Button>();

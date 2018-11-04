@@ -13,7 +13,7 @@ namespace Logic.Gameplay.Ships
         public Order[] Orders;
         public GameObject[] Model;
         public bool Displayed;
-        public Texture2D Icon;
+        public Sprite Icon;
         public int[] Cost;
 
         public ShipSystem ResolveSystem(int subsystem)

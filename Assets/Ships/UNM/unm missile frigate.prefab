@@ -310,7 +310,8 @@ MonoBehaviour:
     Width: 2
     Height: 1
   UUID: 4cde4f97-f483-43c0-b7af-2bdd618e0ef2
-  ShipClass: 
+  ShipClass: Stellar
+  ClassVariant: Missile
   Faction: 0
   ShipUuid: 
   Damage: 

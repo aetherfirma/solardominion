@@ -18,6 +18,7 @@ namespace Logic.Gameplay.Ships
         public ShipSystemPosition[] Systems;
         public string UUID;
         public string ShipClass;
+        public string ClassVariant;
         public Player Player;
         public Faction Faction;
         public string ShipUuid;
@@ -27,7 +28,7 @@ namespace Logic.Gameplay.Ships
         public int Speed;
         public int Training;
         public int Initiative;
-        public bool UnderOrders;
+        public bool UnderOrders, Orderable;
         public bool Fleeing, Fled;
         public Order Order;
         public bool Deployed;
@@ -51,7 +52,6 @@ namespace Logic.Gameplay.Ships
                     for (int dy = 0; dy < systemPosition.Height; dy++)
                     {
                         var i = 5 * (systemPosition.Y + dy) + dx + systemPosition.X;
-                        Debug.Log("Position: " + (systemPosition.X + dx) + ", " + (systemPosition.Y + dy) + ": " + i);
                         if (systems[i] == true) throw new Exception(string.Format("{0},{1} is double filled", systemPosition.X + dx, systemPosition.Y + dy));
                         systems[i] = true;
                     }
@@ -64,6 +64,23 @@ namespace Logic.Gameplay.Ships
                 if (systems[i] == false) unfilled.Add(string.Format("{0}, {1}", i / 5, i % 5));
             }
             if (unfilled.Count > 0) throw new Exception(string.Format("Positions {0} filled", string.Join(", ", unfilled.ToArray())));
+        }
+
+        public ShipSystem GetCompositeSystem()
+        {
+            return (from systemPosition in Systems where systemPosition.System.Type == SystemType.Composite select systemPosition.System).FirstOrDefault();
+        }
+
+        public int[] GetCompositeSystems()
+        {
+            var composites = new List<int>();
+
+            for (int i = 0; i < Systems.Length; i++)
+            {
+                if (Systems[i].System.Type == SystemType.Composite) composites.Add(i);
+            }
+
+            return composites.ToArray();
         }
 
         public bool Alive
@@ -216,7 +233,7 @@ namespace Logic.Gameplay.Ships
         {
             try
             {
-                switch (Player.Faction)
+                switch (Faction)
                 {
                     case Faction.UNM:
                         return ShipNameGenerator.UNNName(this);
@@ -231,7 +248,7 @@ namespace Logic.Gameplay.Ships
             return ShipClass;
         }
 
-        private void SetupStatusArrays()
+        public void SetupStatusArrays()
         {
             Damage = new bool[Systems.Length];
             Used = new bool[Systems.Length];

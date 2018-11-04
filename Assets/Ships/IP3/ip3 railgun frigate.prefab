@@ -297,7 +297,8 @@ MonoBehaviour:
     Width: 1
     Height: 2
   UUID: dde2c7ce-35ca-4454-97b1-001f37c51967
-  ShipClass: 
+  ShipClass: Union
+  ClassVariant: Railgun
   Faction: 1
   ShipUuid: 
   Damage: 

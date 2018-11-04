@@ -310,7 +310,8 @@ MonoBehaviour:
     Width: 2
     Height: 1
   UUID: 8723f977-d16c-4b1e-b937-5888c93a2fef
-  ShipClass: 
+  ShipClass: Stellar
+  ClassVariant: Railgun
   Faction: 0
   ShipUuid: 
   Damage: 

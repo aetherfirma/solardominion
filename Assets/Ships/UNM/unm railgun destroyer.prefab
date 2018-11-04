@@ -388,7 +388,8 @@ MonoBehaviour:
     Width: 1
     Height: 2
   UUID: b9096e4e-f90f-4f45-84d7-02cd4d0242e9
-  ShipClass: 
+  ShipClass: Constellation
+  ClassVariant: Railgun
   Faction: 0
   ShipUuid: 
   Damage: 

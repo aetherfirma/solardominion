@@ -15,7 +15,6 @@ namespace Logic.Gameplay.Ships
         public SerializedProperty Model;
         public SerializedProperty Displayed;
         public SerializedProperty Cost;
-        public SerializedProperty CardImages;
         public SerializedProperty Icon;
 
         private void OnEnable()
@@ -36,8 +35,6 @@ namespace Logic.Gameplay.Ships
             Model = serializedObject.FindProperty("Model");
             Displayed = serializedObject.FindProperty("Displayed");
             Cost = serializedObject.FindProperty("Cost");
-            Cost = serializedObject.FindProperty("Cost");
-            CardImages = serializedObject.FindProperty("CardImages");
             Icon = serializedObject.FindProperty("Icon");
         }
 
@@ -71,7 +68,6 @@ namespace Logic.Gameplay.Ships
                     EditorGUILayout.PropertyField(SubSystems, true);
                     break;
             }
-            EditorGUILayout.PropertyField(CardImages, true);
             EditorGUILayout.PropertyField(Icon);
             EditorGUILayout.PropertyField(Cost, true);
             EditorGUILayout.PropertyField(Displayed);
