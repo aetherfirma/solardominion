@@ -209,8 +209,6 @@ namespace Logic.Gameplay.Rules
 
             _gameGrid.GetComponentInChildren<MeshRenderer>().material.SetVector("_MousePosition", MouseLocation);
 
-            SetTooltip();
-
             UpdateFlashedMessages();
             
             _pauseHandler.Update();
@@ -356,26 +354,9 @@ namespace Logic.Gameplay.Rules
             }
         }
 
-        private Tooltip _tooltip;
-        public bool TooltipEnabled = true;
         private LoginScreen _loginScreen;
         private NewGameScreen _newGameScreen;
         private JoinGameScreen _joinGameScreen;
-
-        private void SetTooltip()
-        {
-            if (_tooltip != null && (!TooltipEnabled || MouseSelection == null))
-            {
-                Destroy(_tooltip.gameObject);
-                _tooltip = null;
-            }
-            else if (TooltipEnabled && _tooltip == null && MouseSelection != null)
-            {
-                var ship = MouseSelection.GetComponent<Ship>();
-                if (ship == null) return;
-                _tooltip = Tooltip.Create(UiCanvas, ship.Describe());
-            }
-        }
 
         public bool ValidShipPosition(Vector3 position)
         {

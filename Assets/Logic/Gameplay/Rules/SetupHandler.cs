@@ -126,7 +126,6 @@ namespace Logic.Gameplay.Rules
                     _selection.Deployed = true;
                     BroadcastDeployment(_selection);
                     _selection = null;
-                    _referee.TooltipEnabled = true;
 
                     if (!FindNextSetupPlayer()) _referee.Phase = GamePhase.Play;
                 }
@@ -171,7 +170,6 @@ namespace Logic.Gameplay.Rules
                 if (ship != null && !ship.Deployed && ship.Player.Uuid == _referee.PlayerUuid)
                 {
                     _selection = ship;
-                    _referee.TooltipEnabled = false;
                     foreach (var popup in _popups)
                     {
                         popup.Destroy();

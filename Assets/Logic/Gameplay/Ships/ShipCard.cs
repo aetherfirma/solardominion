@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Logic.Gameplay.Players;
+using Logic.Ui;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,10 +14,15 @@ namespace Logic.Gameplay.Ships
         public RectTransform SystemTransform;
         public RectTransform CompositeTransform;
         private Transform _systemDisplay, _compositeDisplay;
-        private Button _lockOnTarget, _braceForImpact, _fullThrust, _onMyMark;
+        private Button _lockOnTarget, _braceForImpact, _fullThrust;
         private Button[] _compositeOptionAs, _compositeOptionBs;
         private TextMeshProUGUI _initiative, _speed, _thrust;
-        public Sprite SystemBackground, DamagedSystemBackground;
+        public Sprite SystemBackground, DamagedSystemBackground, SelectableSystemBackground;
+        public MessageTooltip Tooltip;
+
+        public delegate bool SystemCallback(ShipCard card, int i, ShipSystem system);
+
+        public SystemCallback Callback;
 
         private readonly Color _unmColor = new Color(0.31f, 0.54f, 1f);
         private readonly Color _ip3Color = new Color(0.77f, 0.12f, 0.14f);
@@ -28,12 +35,18 @@ namespace Logic.Gameplay.Ships
         private bool _knownOrderable;
         private int[] _knownSubsystems;
         private int[] _compositeSystems;
-        private Image[] _systemImageBackgrounds;
-        private bool[] _knownDamage;
+        private Button[] _systemButtons;
+        private bool[] _knownDamage, _knownSelected, _knownSelectable;
+
+        public bool[] Selectable;
+        public bool[] Selected;
 
         private void Start()
         {
             _factionColor = Ship.Faction == Faction.UNM ? _unmColor : _ip3Color;
+            
+            Selectable = new bool[Ship.Systems.Length];
+            Selected = new bool[Ship.Systems.Length];
 
             transform.Find("Ship Name").GetComponent<TextMeshProUGUI>().text = Ship.Name();
             transform.Find("Faction Border").GetComponent<Image>().color = _factionColor;
@@ -51,24 +64,27 @@ namespace Logic.Gameplay.Ships
             colorBlock.highlightedColor = _factionColor;
             _lockOnTarget.colors = colorBlock;
             _lockOnTarget.onClick.AddListener(() => SetOrder(Order.LockOnTarget));
+            var tooltip = _lockOnTarget.gameObject.AddComponent<TooltipHaver>();
+            tooltip.Tooltip = Tooltip;
+            tooltip.Message = "<b><size=16>Lock on Target</size><b>\nRerolls failed attack rolls against the first ship you shoot, rerolls successful rolls against any other ship.";
 
             _braceForImpact = transform.Find("Order Icons/Brace For Impact").GetComponent<Button>();
             colorBlock = _braceForImpact.colors;
             colorBlock.highlightedColor = _factionColor;
             _braceForImpact.colors = colorBlock;
             _braceForImpact.onClick.AddListener(() => SetOrder(Order.BraceForImpact));
+            tooltip = _braceForImpact.gameObject.AddComponent<TooltipHaver>();
+            tooltip.Tooltip = Tooltip;
+            tooltip.Message = "<b><size=16>Brace for Impact</size><b>\nRerolls failed defence rolls, rerolls successful attack rolls.";
 
             _fullThrust = transform.Find("Order Icons/Full Thrust").GetComponent<Button>();
             colorBlock = _fullThrust.colors;
             colorBlock.highlightedColor = _factionColor;
             _fullThrust.colors = colorBlock;
             _fullThrust.onClick.AddListener(() => SetOrder(Order.MilitaryThrust));
-
-            _onMyMark = transform.Find("Order Icons/On My Mark").GetComponent<Button>();
-            colorBlock = _onMyMark.colors;
-            colorBlock.highlightedColor = _factionColor;
-            _onMyMark.colors = colorBlock;
-            _onMyMark.onClick.AddListener(() => SetOrder(Order.OnMyMark));
+            tooltip = _fullThrust.gameObject.AddComponent<TooltipHaver>();
+            tooltip.Tooltip = Tooltip;
+            tooltip.Message = "<b><size=16>Full Thrust</size><b>\nDoubles the thrust provided by all systems, but rerolls successful defence rolls.";
 
             transform.Find("Rating").GetComponent<TextMeshProUGUI>().text = string.Format("Rating\n{0}", Ship.Training);
             _initiative = transform.Find("Initiative").GetComponent<TextMeshProUGUI>();
@@ -78,7 +94,7 @@ namespace Logic.Gameplay.Ships
             transform.Find("Composite System Title").GetComponent<TextMeshProUGUI>().text =
                 string.Format("{0} Status", Ship.GetCompositeSystem().name);
 
-            _systemImageBackgrounds = new Image[Ship.Systems.Length];
+            _systemButtons = new Button[Ship.Systems.Length];
 
             for (var i = 0; i < Ship.Systems.Length; i++)
             {
@@ -88,7 +104,27 @@ namespace Logic.Gameplay.Ships
                 systemBox.anchorMax = new Vector2(0.2f * (system.X + system.Width), 0.25f * (system.Y + system.Height));
                 systemBox.offsetMin = new Vector2(-1, -1);
                 systemBox.offsetMax = new Vector2(1, 1);
-                _systemImageBackgrounds[i] = systemBox.GetComponent<Image>();
+                _systemButtons[i] = systemBox.GetComponent<Button>();
+
+                tooltip = systemBox.gameObject.AddComponent<TooltipHaver>();
+                tooltip.Tooltip = Tooltip;
+                tooltip.Message = system.System.Describe();
+
+                _systemButtons[i].interactable = false;
+                var index = i;
+                _systemButtons[i].onClick.AddListener(() =>
+                {
+                    UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+                    if (Callback(this, index, system.System))
+                    {
+                        Selected[index] = !Selected[index];
+                    }
+                });
+
+                var buttonColors = _systemButtons[i].colors;
+                buttonColors.highlightedColor = _factionColor;
+                _systemButtons[i].colors = buttonColors;
+
                 systemBox.Find("System Name").GetComponent<TextMeshProUGUI>().text = system.System.name;
             }
 
@@ -105,12 +141,17 @@ namespace Logic.Gameplay.Ships
                 var c = n;
                 n++;
                 var compositeBox = Instantiate(CompositeTransform, _compositeDisplay);
+                compositeBox.transform.localPosition = new Vector3(0, c * -50);
+
                 compositeBox.Find("System").GetComponent<TextMeshProUGUI>().text = string.Format("System {0}", n);
-                var optionA = compositeBox.Find("Option A");
-                optionA.GetComponent<Image>().sprite = system.SubSystems[0].Icon;
-                var optionAButton = optionA.GetComponent<Button>();
+                var optionAButton = compositeBox.Find("Option A").GetComponent<Button>();
+                optionAButton.image.sprite = system.SubSystems[0].Icon;
                 _compositeOptionAs[c] = optionAButton;
                 optionAButton.onClick.AddListener(() => SetCompositeSystem(index, 0));
+
+                tooltip = optionAButton.gameObject.AddComponent<TooltipHaver>();
+                tooltip.Tooltip = Tooltip;
+                tooltip.Message = system.SubSystems[0].Describe();
 
                 var optionB = compositeBox.Find("Option B");
                 optionB.GetComponent<Image>().sprite = system.SubSystems[1].Icon;
@@ -118,7 +159,10 @@ namespace Logic.Gameplay.Ships
                 optionBButton.onClick.AddListener(() => SetCompositeSystem(index, 1));
                 _compositeOptionBs[c] = optionBButton;
 
-                compositeBox.transform.localPosition = new Vector3(0, c * -50);
+                tooltip = optionBButton.gameObject.AddComponent<TooltipHaver>();
+                tooltip.Tooltip = Tooltip;
+                tooltip.Message = system.SubSystems[1].Describe();
+
             }
 
             UpdateSpeed();
@@ -126,17 +170,54 @@ namespace Logic.Gameplay.Ships
             UpdateInitiative();
             UpdateOrders();
             UpdateSubsystems();
-            UpdateDamage();
+            UpdateSystemsDisplay();
         }
 
-        private void UpdateDamage()
+        private void UpdateSystemsDisplay()
         {
             _knownDamage = (bool[]) Ship.Damage.Clone();
+            _knownSelectable = (bool[]) Selectable.Clone();
+            _knownSelected = (bool[]) Selected.Clone();
 
             for (var i = 0; i < Ship.Damage.Length; i++)
             {
-                _systemImageBackgrounds[i].sprite = !Ship.Damage[i] ? SystemBackground : DamagedSystemBackground;
-                _systemImageBackgrounds[i].color = !Ship.Damage[i] ? Color.black : Color.red;
+                var button = _systemButtons[i];
+                var image = button.image;
+                var damaged = Ship.Damage[i];
+                var selectable = Selectable[i];
+                var selected = Selected[i];
+                var colours = button.colors;
+
+                if (damaged)
+                {
+                    image.sprite = DamagedSystemBackground;
+                    colours.disabledColor = Color.red;
+                    button.interactable = false;
+                }
+                else if (selected)
+                {
+                    image.sprite = SelectableSystemBackground;
+                    colours.normalColor = _factionColor;
+                    colours.highlightedColor = _factionColor;
+                    colours.pressedColor = Color.grey;
+                    button.interactable = true;                    
+                }
+                else if (selectable)
+                {
+                    image.sprite = SelectableSystemBackground;
+                    colours.normalColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+                    colours.highlightedColor = _factionColor;
+                    colours.pressedColor = _factionColor;
+                    button.interactable = true;
+                }
+                else
+                {
+                    image.sprite = SystemBackground;
+                    colours.disabledColor = Color.black;
+                    button.interactable = false;
+                }
+
+                button.colors = colours;
             }
         }
 
@@ -229,9 +310,9 @@ namespace Logic.Gameplay.Ships
                 }
             }
 
-            if (!_knownDamage.SequenceEqual(Ship.Damage))
+            if (!_knownDamage.SequenceEqual(Ship.Damage) || !_knownSelected.SequenceEqual(Selected) || !_knownSelectable.SequenceEqual(Selectable))
             {
-                UpdateDamage();
+                UpdateSystemsDisplay();
             }
         }
 
@@ -253,16 +334,12 @@ namespace Logic.Gameplay.Ships
 
                     if (Ship.Order == Order.MilitaryThrust) SetActiveSystem(_fullThrust);
                     else SetInactiveSystem(_fullThrust);
-
-                    if (Ship.Order == Order.OnMyMark) SetActiveSystem(_onMyMark);
-                    else SetInactiveSystem(_onMyMark);
                 }
                 else
                 {
                     SetSelectableSystem(_lockOnTarget);
                     SetSelectableSystem(_braceForImpact);
                     SetSelectableSystem(_fullThrust);
-                    SetSelectableSystem(_onMyMark);
                 }
             }
             else
@@ -277,16 +354,12 @@ namespace Logic.Gameplay.Ships
 
                     if (Ship.Order == Order.MilitaryThrust) SetSelectedSystem(_fullThrust);
                     else SetInactiveSystem(_fullThrust);
-
-                    if (Ship.Order == Order.OnMyMark) SetSelectedSystem(_onMyMark);
-                    else SetInactiveSystem(_onMyMark);
                 }
                 else
                 {
                     SetInactiveSystem(_lockOnTarget);
                     SetInactiveSystem(_braceForImpact);
                     SetInactiveSystem(_fullThrust);
-                    SetInactiveSystem(_onMyMark);
                 }
             }
         }

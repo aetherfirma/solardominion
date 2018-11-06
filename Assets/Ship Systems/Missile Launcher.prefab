@@ -68,8 +68,6 @@ MonoBehaviour:
   - {fileID: 1021880648692204, guid: 6f55671ed6d0e8c4ebf2faf1bcfe289a, type: 2}
   - {fileID: 1021880648692204, guid: 2c4119db011e6fe49a722a26cab1c0d4, type: 2}
   Displayed: 1
-  CardImages:
-  - {fileID: 2800000, guid: 84ba4881bd99172458fff084d97b3872, type: 3}
-  - {fileID: 2800000, guid: 342290de9cec66c4ea9ef2fea1bbdafa, type: 3}
-  Icon: {fileID: 2800000, guid: 65db004932dc0cb408fcc4bfcffb35a2, type: 3}
+  Icon: {fileID: 21300000, guid: 65db004932dc0cb408fcc4bfcffb35a2, type: 3}
   Cost: 3f0000003100000024000000170000000b000000
+  Description: 

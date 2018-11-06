@@ -1,16 +1,16 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
+﻿using TMPro;
+using UnityEngine;
 
 namespace Logic.Ui
 {
     public class MessageTooltip : Tooltip
     {
-        private Text _text;
+        private TextMeshProUGUI _text;
         private string _message;
 
         public new void Start()
         {
-            _text = transform.Find("Text").gameObject.GetComponent<Text>();
+            _text = transform.Find("Text").gameObject.GetComponent<TextMeshProUGUI>();
             _text.text = _message;
             base.Start();
         }

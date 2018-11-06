@@ -10,9 +10,15 @@ namespace Logic.Ui
         public void Start()
         {
             RectTransform = GetComponent<RectTransform>();
+            SetPosition();
         }
 
         public void Update()
+        {
+            SetPosition();
+        }
+
+        private void SetPosition()
         {
             var inputX = Input.mousePosition.x + Offset.x;
             var outputX = inputX + RectTransform.sizeDelta.x + 20 < Screen.width

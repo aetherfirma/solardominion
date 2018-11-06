@@ -8,15 +8,15 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications: []
     m_RemovedComponents: []
-  m_ParentPrefab: {fileID: 0}
+  m_SourcePrefab: {fileID: 0}
   m_RootGameObject: {fileID: 1008246297435792}
-  m_IsPrefabParent: 1
+  m_IsPrefabAsset: 1
 --- !u!1 &1008246297435792
 GameObject:
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 5
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4965891456035696}
   - component: {fileID: 114906593097577518}
@@ -30,7 +30,7 @@ GameObject:
 --- !u!4 &4965891456035696
 Transform:
   m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1008246297435792}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -43,7 +43,7 @@ Transform:
 --- !u!114 &114906593097577518
 MonoBehaviour:
   m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1008246297435792}
   m_Enabled: 1
@@ -56,13 +56,17 @@ MonoBehaviour:
   Thrust: 2
   Defence: 0
   Shots: 0
-  Range: 0
   Damage: 0
+  ShortRange: 0
+  ShortModifier: 0
+  MediumRange: 0
+  MediumModifier: 0
+  LongRange: 0
+  LongModifier: 0
   Orders: 
-  Model: {fileID: 0}
+  Model:
+  - {fileID: 0}
   Displayed: 0
-  CardImages:
-  - {fileID: 2800000, guid: 7286e0f65fea9484aa5e3263c62b8d47, type: 3}
-  - {fileID: 2800000, guid: 7ff499566d348ef4b93caf295c735a98, type: 3}
-  Icon: {fileID: 2800000, guid: ef88173d16792b34daf89774dc3b54e6, type: 3}
+  Icon: {fileID: 21300000, guid: ef88173d16792b34daf89774dc3b54e6, type: 3}
   Cost: 1900000015000000110000000d00000009000000
+  Description: 
