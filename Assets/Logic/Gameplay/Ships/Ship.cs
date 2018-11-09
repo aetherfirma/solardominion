@@ -33,6 +33,7 @@ namespace Logic.Gameplay.Ships
         public Order Order;
         public bool Deployed;
         public int ThrustRemaining;
+        public ShipCard Card;
         [Range(2, 6)] public int MinimumTraining;
         [Range(2, 6)] public int MaximumTraining;
 
@@ -313,6 +314,14 @@ namespace Logic.Gameplay.Ships
         {
             SetSpeedMarker(Speed);
             LerpPosition();
+        }
+
+        public void MarkAsUsed(bool[] used)
+        {
+            for (var i = 0; i < used.Length; i++)
+            {
+                if (used[i]) Used[i] = true;
+            }
         }
     }
 }

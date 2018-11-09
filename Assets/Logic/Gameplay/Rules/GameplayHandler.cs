@@ -28,6 +28,10 @@ namespace Logic.Gameplay.Rules
         public RectTransform TurnCounter;
         private TextMeshProUGUI _turnCounter;
 
+        private List<ShipCard> _shipCards = new List<ShipCard>();
+        public bool ShowShipCards = true;
+        public Ship SelectedShip;
+
         private Image _initiativePhaseIndicator,
             _commandPhaseIndicator,
             _movementPhaseIndicator,
@@ -136,6 +140,7 @@ namespace Logic.Gameplay.Rules
 
         private void IncrementPhase()
         {
+            SelectedShip = null;
             _currentInitiativeStep = 2;
             switch (_phase)
             {
@@ -169,6 +174,7 @@ namespace Logic.Gameplay.Rules
             }
 
             SetTurnDisplay();
+            HandleShipCards();
 
             switch (_phase)
             {
@@ -195,6 +201,57 @@ namespace Logic.Gameplay.Rules
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private void HandleShipCards()
+        {
+            var fleet = Referee.Players[Referee.LocalPlayer].Fleet;
+            if (fleet.Length != _shipCards.Count)
+            {
+                foreach (var card in _shipCards)
+                {
+                    Object.Destroy(card.gameObject);
+                }
+                _shipCards.Clear();
+                foreach (var ship in fleet)
+                {
+                    var card = Object.Instantiate(Referee.ShipCard, LowerBar);
+                    card.Ship = ship;
+                    card.transform.localPosition = Vector3.zero;
+                    _shipCards.Add(card);
+                }
+            }
+
+            const float splay = 100f;
+            var basic = splay/2 - splay * (_shipCards.Count - 1);
+            for (int i = 0; i < _shipCards.Count; i++)
+            {
+                var card = _shipCards[i];
+                var x = basic + splay * i;
+                
+                var y = -150;
+                if (ShowShipCards == false)
+                {
+                    y = -300;
+                }
+                else if (SelectedShip != null)
+                {
+                    y = card.Ship == SelectedShip ? 50 : -255;
+                }
+                else if (Referee.MouseSelection != null)
+                {
+                    var hovership = Referee.MouseSelection.GetComponent<Ship>();
+                    if (hovership != null && hovership.Player == Referee.Players[Referee.LocalPlayer])
+                    {
+                        y = hovership == card.Ship ? -100 : -200;
+                    }
+                } 
+                
+                var rot = SelectedShip != null ? 0 : 20;
+                
+                card.transform.localPosition = Vector3.Lerp(card.transform.localPosition, new Vector2(x, y), Time.deltaTime * 2);
+                card.transform.localRotation = Quaternion.Lerp(card.transform.localRotation, Quaternion.Euler(0,0,rot), Time.deltaTime * 2);
             }
         }
 
@@ -488,8 +545,7 @@ namespace Logic.Gameplay.Rules
 
         public void ClearSystemsDisplay()
         {
-            LowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<Image>() != null);
-            LowerBar.transform.Find("Text").GetComponent<Text>().text = "";
+            LowerBar.transform.DestroyAllChildren(obj => obj.GetComponent<ShipCard>() == null);
         }
     }
 

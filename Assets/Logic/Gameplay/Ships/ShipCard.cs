@@ -2,8 +2,10 @@
 using System.Linq;
 using Logic.Gameplay.Players;
 using Logic.Ui;
+using Logic.Utilities;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Logic.Gameplay.Ships
@@ -20,9 +22,11 @@ namespace Logic.Gameplay.Ships
         public Sprite SystemBackground, DamagedSystemBackground, SelectableSystemBackground;
         public MessageTooltip Tooltip;
 
-        public delegate bool SystemCallback(ShipCard card, int i, ShipSystem system);
+        public delegate ShipSystemSelectionResult SystemSelectionCallback(ShipCard card, int i, ShipSystem system);
+        public delegate void SystemDeselectionCallback(ShipCard card, int i, ShipSystem system);
 
-        public SystemCallback Callback;
+        public SystemSelectionCallback SelectionCallback;
+        public SystemDeselectionCallback DeselectionCallback;
 
         private readonly Color _unmColor = new Color(0.31f, 0.54f, 1f);
         private readonly Color _ip3Color = new Color(0.77f, 0.12f, 0.14f);
@@ -44,6 +48,7 @@ namespace Logic.Gameplay.Ships
         private void Start()
         {
             _factionColor = Ship.Faction == Faction.UNM ? _unmColor : _ip3Color;
+            Ship.Card = this;
             
             Selectable = new bool[Ship.Systems.Length];
             Selected = new bool[Ship.Systems.Length];
@@ -114,10 +119,28 @@ namespace Logic.Gameplay.Ships
                 var index = i;
                 _systemButtons[i].onClick.AddListener(() =>
                 {
-                    UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
-                    if (Callback(this, index, system.System))
+                    EventSystem.current.SetSelectedGameObject(null);
+                    if (Selected[index])
                     {
-                        Selected[index] = !Selected[index];
+                        Selected[index] = false;
+                        DeselectionCallback(this, index, system.System);
+                    }
+                    else
+                    {
+                        var shipSystemSelectionResult = SelectionCallback(this, index, system.System);
+                        switch (shipSystemSelectionResult)
+                        {
+                            case ShipSystemSelectionResult.DoNothing:
+                                break;
+                            case ShipSystemSelectionResult.SetSelection:
+                                Selected[index] = true;
+                                break;
+                            case ShipSystemSelectionResult.ClearSelection:
+                                Selected = new bool[Selected.Length];
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
                     }
                 });
 
@@ -272,7 +295,7 @@ namespace Logic.Gameplay.Ships
         private void SetCompositeSystem(int systemNumber, int subsystem)
         {
             Ship.Subsystem[systemNumber] = Ship.Subsystem[systemNumber] == -1 ? subsystem : -1;
-            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            EventSystem.current.SetSelectedGameObject(null);
         }
 
         private void Update()
@@ -387,7 +410,7 @@ namespace Logic.Gameplay.Ships
             if (!Ship.Orderable) return;
             Ship.UnderOrders = !Ship.UnderOrders;
             Ship.Order = order;
-            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            EventSystem.current.SetSelectedGameObject(null);
         }
 
         private void SetSelectableSystem(Button button)
@@ -428,6 +451,11 @@ namespace Logic.Gameplay.Ships
             colorBlock.normalColor = _factionColor;
             colorBlock.disabledColor = _factionColor;
             button.colors = colorBlock;
+        }
+
+        public void ClearSelected()
+        {
+            Selected = new bool[Selected.Length];
         }
     }
 }

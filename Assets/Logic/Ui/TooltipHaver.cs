@@ -26,6 +26,11 @@ namespace Logic.Ui
             DestroyTooltip();
         }
 
+        private void OnDestroy()
+        {
+            DestroyTooltip();
+        }
+
         private void DestroyTooltip()
         {
             if (_tooltip != null)

@@ -17,12 +17,11 @@ namespace Logic.Gameplay.Rules.GamePhases
     {
         private GameplayHandler _gameplayHandler;
 
-        private Ship _selection;
         private Ship _target;
-        private ShipSystem _selectedWeapon;
-        private List<int> _selectedSystems = new List<int>();
         private readonly List<Popup> _popups = new List<Popup>();
         private GameObject _rangeMarker;
+        private ShipSystem _selectedWeapon;
+        private int _selectedShots;
 
         public ActionPhase(GameplayHandler gameplayHandler)
         {
@@ -42,7 +41,7 @@ namespace Logic.Gameplay.Rules.GamePhases
         {
             _gameplayHandler.Referee.DisplayUpperText("");
 
-            if (_selection == null) SelectActiveShip();
+            if (_gameplayHandler.SelectedShip == null) SelectActiveShip();
             else
             {
                 if (_target)
@@ -86,38 +85,122 @@ namespace Logic.Gameplay.Rules.GamePhases
                 if (ship != null && _gameplayHandler.IsShipSelectable(ship))
                 {
                     ClearPopups();
-                    _selection = ship;
+                    _gameplayHandler.SelectedShip = ship;
                     var cameraOperator = _gameplayHandler.Referee.CameraOperator;
                     cameraOperator.SetCameraPosition(ship.transform.position, cameraOperator.Direction, cameraOperator.Zoom);
-                    DrawActionSystemsDisplay(ship);
+                    var shipCard = ship.Card;
+                    shipCard.SelectionCallback = ActionPhaseSelectionCallback;
+                    shipCard.DeselectionCallback = ActionPhaseDeselectionCallback;
+                    FindSelectableSystems(shipCard);
+                    _gameplayHandler.CreateButton(new Vector2(300, 50), new Vector2(80, 25), "End Phase", OnComplete);
                 }
+            }
+        }
+
+        private ShipSystemSelectionResult ActionPhaseSelectionCallback(ShipCard card, int index, ShipSystem system)
+        {
+            var realSystem = system.ResolveSystem(card.Ship.Subsystem[index]);
+            
+            if (realSystem.Type == SystemType.Hangar)
+            {
+                // TODO: Implement strike craft
+                _gameplayHandler.Referee.FlashMessage("Hangars aren't supported yet");
+                card.Ship.Used[index] = true;
+                return ShipSystemSelectionResult.DoNothing;
+            }
+            
+            if (realSystem.Type == SystemType.Weapon)
+            {
+                FindLikeSystems(card, realSystem);
+                if (_rangeMarker == null) SetupRangeMarker(realSystem);
+
+                return ShipSystemSelectionResult.SetSelection;
+            }
+
+            return ShipSystemSelectionResult.DoNothing;
+        }
+
+        private void SetupRangeMarker(ShipSystem system)
+        {
+            _rangeMarker = Object.Instantiate(_gameplayHandler.Referee.RangeRings,
+                new Vector3(0, -3, 0), Quaternion.identity);
+            _rangeMarker.GetComponent<RangeMarkers>().Setup(
+                system.ShortRange,
+                system.MediumRange,
+                system.LongRange,
+                _gameplayHandler.SelectedShip.transform.position - new Vector3(0, -3, 0),
+                _gameplayHandler.Referee
+            );
+        }
+
+        private static void FindLikeSystems(ShipCard card, ShipSystem realSystem)
+        {
+            for (var i = 0; i < card.Selectable.Length; i++)
+            {
+                var shipSystem = card.Ship.Systems[i].System.ResolveSystem(card.Ship.Subsystem[i]);
+                card.Selectable[i] = !card.Ship.Used[i] && !card.Ship.Damage[i] && shipSystem == realSystem;
+            }
+        }
+
+        private void ActionPhaseDeselectionCallback(ShipCard card, int index, ShipSystem system)
+        {
+            if (!card.Selected.Any(s => s))
+            {
+                FindSelectableSystems(card);
+                if (_rangeMarker != null) DestroyRangeMarker();
+            }
+        }
+
+        private void DestroyRangeMarker()
+        {
+            Object.Destroy(_rangeMarker);
+            _rangeMarker = null;
+        }
+
+        private static void FindSelectableSystems(ShipCard card)
+        {
+            for (var i = 0; i < card.Selectable.Length; i++)
+            {
+                var shipSystem = card.Ship.Systems[i].System.ResolveSystem(card.Ship.Subsystem[i]);
+                card.Selectable[i] = !card.Ship.Used[i] && !card.Ship.Damage[i] &&
+                                     (shipSystem.Type == SystemType.Weapon || shipSystem.Type == SystemType.Hangar);
             }
         }
 
         private void SelectAttackTarget()
         {
-            if (Input.GetMouseButtonUp(0) && _gameplayHandler.Referee.MouseSelection && _selectedWeapon != null)
+            var selections = _gameplayHandler.SelectedShip.Card.Selected.Select((selected, index) =>
             {
+                if (!selected) return null;
+                return _gameplayHandler.SelectedShip.Systems[index].System
+                    .ResolveSystem(_gameplayHandler.SelectedShip.Subsystem[index]);
+            }).Where(system => system != null).ToArray();
+            
+            if (Input.GetMouseButtonUp(0) && _gameplayHandler.Referee.MouseSelection && selections.Any())
+            {                
                 var ship = _gameplayHandler.Referee.MouseSelection.GetComponent<Ship>();
                 if (ship != null && ship.Player != _gameplayHandler.CurrentPlayer)
                 {
-                    if (IsInRange(_selection, _selectedWeapon, ship))
+                    var weapon = selections.First();
+                    
+                    if (IsInRange(_gameplayHandler.SelectedShip, weapon, ship))
                     {
                         _target = ship;
                         _gameplayHandler.ClearSystemsDisplay();
                         // TODO: Show target better
-                        BroadcastWeaponFiring(_selection, _selectedWeapon, _selectedSystems, _target);
+                        BroadcastWeaponFiring(_gameplayHandler.SelectedShip, weapon, selections.Length, _target);
+                        _selectedWeapon = weapon;
+                        _selectedShots = selections.Length;
+                        _gameplayHandler.SelectedShip.MarkAsUsed(_gameplayHandler.SelectedShip.Card.Selected);
+                        _gameplayHandler.SelectedShip.Card.ClearSelected();
                         _gameplayHandler.Referee.DisplayUpperText("Waiting on response");
-                        if (_rangeMarker != null)
-                        {
-                            Object.Destroy(_rangeMarker);
-                            _rangeMarker = null;
-                        }
+                        _gameplayHandler.ShowShipCards = false;
+                        DestroyRangeMarker();
                     }
                     else
                     {
                         _gameplayHandler.Referee.FlashMessage(string.Format("Cannot fire {0:} at {1:}, out of range.",
-                            _selectedWeapon.name, ship.Name()));
+                            weapon.name, ship.Name()));
                     }
                 }
             }
@@ -141,21 +224,18 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                         targetShip.ThrustRemaining -= turn.thrust;
 
-                        var shots = _selectedWeapon.Shots * _selectedSystems.Count;
+                        var shots = _selectedWeapon.Shots * _selectedShots;
                         var damage = _selectedWeapon.Damage;
                         var defenderPool = turn.thrust + GetRangeModifier(firingShip, _selectedWeapon, targetShip) + targetShip.CalculateDefensiveModifier();
 
                         _selectedWeapon = null;
-                        foreach (var system in _selectedSystems)
-                        {
-                            firingShip.Used[system] = true;
-                        }
-                        _selectedSystems.Clear();
 
                         ResolveAttack(firingShip, shots, damage, targetShip, defenderPool);
 
                         _target = null;
-                        DrawActionSystemsDisplay(firingShip);
+                        _gameplayHandler.ShowShipCards = true;
+                        FindSelectableSystems(_gameplayHandler.SelectedShip.Card);
+                        _gameplayHandler.CreateButton(new Vector2(300, 50), new Vector2(80, 25), "End Phase", OnComplete);
                     }
 
                     _gameplayHandler.Referee.LastObservedInstruction = i + 1;
@@ -164,91 +244,15 @@ namespace Logic.Gameplay.Rules.GamePhases
             }
         }
 
-        private void DrawActionSystemsDisplay(Ship ship)
+
+        private void OnComplete()
         {
-            _gameplayHandler.DrawSystemsDisplay(
-                ship,
-                (index, system, subsystem) =>
-                    system.Type == SystemType.Weapon || system.Type == SystemType.Hangar ||
-                    (system.Type == SystemType.Composite &&
-                     (system.SubSystems[subsystem].Type == SystemType.Weapon ||
-                      system.SubSystems[subsystem].Type == SystemType.Hangar)),
-                (index, system, subsystem, image) =>
-                {
-                    if (system.Type == SystemType.Composite) system = system.SubSystems[subsystem];
-
-                    switch (system.Type)
-                    {
-                        case SystemType.Weapon:
-                            if (_selectedWeapon == null)
-                            {
-                                _selectedWeapon = system;
-                                _selectedSystems.Add(index);
-                                image.color = Color.yellow;
-
-                                _rangeMarker = Object.Instantiate(_gameplayHandler.Referee.RangeRings,
-                                    new Vector3(0, -3, 0), Quaternion.identity);
-                                _rangeMarker.GetComponent<RangeMarkers>().Setup(
-                                    _selectedWeapon.ShortRange,
-                                    _selectedWeapon.MediumRange,
-                                    _selectedWeapon.LongRange,
-                                    _selection.transform.position - new Vector3(0, -3, 0),
-                                    _gameplayHandler.Referee
-                                );
-                            }
-                            else
-                            {
-                                if (_selectedSystems.Contains(index))
-                                {
-                                    _selectedSystems.Remove(index);
-                                    image.color = Color.white;
-                                    if (_selectedSystems.Count == 0)
-                                    {
-                                        _selectedWeapon = null;
-                                        if (_rangeMarker != null)
-                                        {
-                                            Object.Destroy(_rangeMarker);
-                                            _rangeMarker = null;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (_selectedWeapon == system)
-                                    {
-                                        image.color = Color.yellow;
-                                        _selectedSystems.Add(index);
-                                    }
-                                    else
-                                    {
-                                        _gameplayHandler.Referee.FlashMessage(
-                                            "Cannot combine different weapon types", 10);
-                                    }
-                                }
-                            }
-
-                            break;
-                        case SystemType.Hangar:
-                            _gameplayHandler.Referee.FlashMessage("Would deploy a ship");
-                            break;
-                    }
-                },
-                selectedShip =>
-                {
-                    _gameplayHandler.ClearSystemsDisplay();
-                    _selection = null;
-                    _gameplayHandler.RemoveShipFromCurrentStep(selectedShip);
-                    BroadcastEndOfAction(selectedShip);
-                    _gameplayHandler.LowerBar.transform.Find("Text").GetComponent<Text>().text = "";
-                    if (_rangeMarker != null)
-                    {
-                        Object.Destroy(_rangeMarker);
-                        _rangeMarker = null;
-                    }
-
-                    _gameplayHandler.NextPlayer();
-                }
-            );
+            _gameplayHandler.ClearSystemsDisplay();
+            _gameplayHandler.RemoveShipFromCurrentStep(_gameplayHandler.SelectedShip);
+            BroadcastEndOfAction(_gameplayHandler.SelectedShip);
+            DestroyRangeMarker();
+            _gameplayHandler.SelectedShip = null;
+            _gameplayHandler.NextPlayer();
         }
 
         private void NetworkPlayer(GameResponse state)
@@ -272,6 +276,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                     else if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.target_player == _gameplayHandler.Referee.PlayerUuid &&
                              turn.action == TurnType.ActionChallenge)
                     {
+                        _gameplayHandler.ShowShipCards = false;
                         _gameplayHandler.Referee.DisplayUpperText(string.Format("Being fired at by {0:} {1:} shot{2:}", turn.weapon, turn.shots, turn.shots == 1 ? "" : "s"));
                         var firingShip = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
                         var targetShip = _gameplayHandler.Referee.Players.Single(p => p.Uuid == turn.target_player).Fleet.Single(s => s.ShipUuid == turn.target);
@@ -316,6 +321,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                                 var damage = turn.damage;
                                 var defenderPool = turnDefenceModifier + thrustToSpend;
 
+                                _gameplayHandler.ShowShipCards = true;
                                 ResolveAttack(firingShip, shots, damage, targetShip, defenderPool);
                             });
 
@@ -424,7 +430,7 @@ namespace Logic.Gameplay.Rules.GamePhases
             return range < selectedWeapon.LongRange;
         }
 
-        private void BroadcastWeaponFiring(Ship ship, ShipSystem selectedWeapon, List<int> selectedSystems, Ship target)
+        private void BroadcastWeaponFiring(Ship ship, ShipSystem selectedWeapon, int numWeapons, Ship target)
         {
             var modifier = GetRangeModifier(ship, selectedWeapon, target);
 
@@ -437,7 +443,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                 target = target.ShipUuid,
                 weapon = selectedWeapon.name,
                 damage = selectedWeapon.Damage,
-                shots = selectedSystems.Count * selectedWeapon.Shots,
+                shots = numWeapons * selectedWeapon.Shots,
                 defence_modifier = modifier
             };
 

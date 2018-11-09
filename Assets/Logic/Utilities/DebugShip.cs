@@ -18,11 +18,6 @@ namespace Logic.Utilities
             Selectable = new bool[ship.Systems.Length];
             _shipCard = Instantiate(ShipCard, Canvas);
             _shipCard.Ship = ship;
-            _shipCard.Callback = (card, i, system) =>
-            {
-                Debug.Log(string.Format("System {0} ({1}) was clicked", i, system.name));
-                return true;
-            };
         }
 
         private void Update()

@@ -32,7 +32,6 @@ namespace Logic.Gameplay.Rules
         public int PlayArea = 120;
         public string Seed;
         public WellRng Rng;
-        public int PointsLimit;
         public GameObject RangeRings;
         public TextMeshPro TextPrefab;
         public Popup Popup;
@@ -57,8 +56,8 @@ namespace Logic.Gameplay.Rules
         public RectTransform TurnIndicator;
         public RectTransform FullArrow, OutlineArrow;
         public Sprite ButtonSprite;
+        public ShipCard ShipCard;
         public Font StandardFont;
-        public MessageTooltip Tooltip;
         public string ServerUrl;
 
         private ListBuilder _listBuilder;

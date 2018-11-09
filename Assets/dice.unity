@@ -625,7 +625,6 @@ MonoBehaviour:
   Rng:
     State: 
     Index: 0
-  PointsLimit: 1500
   RangeRings: {fileID: 1335432483830970, guid: dfed3e2c3095f9641b4c21eb77701be8, type: 2}
   TextPrefab: {fileID: 114028964508136352, guid: 3325d97a304daac4c93d5b48b6f277e7,
     type: 2}
@@ -660,8 +659,8 @@ MonoBehaviour:
   OutlineArrow: {fileID: 224936603884830080, guid: cb31388fac5efef4d9dd93e165503241,
     type: 2}
   ButtonSprite: {fileID: 21300000, guid: 5f950a0a67b6a9247b6dab23e579898e, type: 3}
+  ShipCard: {fileID: 114857160095159050, guid: 21c670c3e3ab69d4190994a12bbfcab3, type: 2}
   StandardFont: {fileID: 12800000, guid: a54212e00584c644a81a59318083efa3, type: 3}
-  Tooltip: {fileID: 114297979607629558, guid: f5829f0d732b11b439f0e5a8d191883c, type: 2}
   ServerUrl: https://solar-dominion.herokuapp.com
   CurrentGameState:
     id: 
@@ -679,7 +678,6 @@ MonoBehaviour:
   LastObservedInstruction: 0
   GameUuid: 
   PlayerUuid: 
-  TooltipEnabled: 1
 --- !u!1 &2119183768
 GameObject:
   m_ObjectHideFlags: 0

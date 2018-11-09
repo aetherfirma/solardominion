@@ -10,7 +10,6 @@ namespace Logic.Gameplay.Rules.GamePhases
 {
     public class CommandPhase
     {
-        private Ship _selection;
         private GameplayHandler _gameplayHandler;
         private List<Popup> _popups = new List<Popup>();
 
@@ -61,7 +60,7 @@ namespace Logic.Gameplay.Rules.GamePhases
             {
                 _gameplayHandler.Referee.DisplayUpperText("");
 
-                if (_selection == null)
+                if (_gameplayHandler.SelectedShip == null)
                 {
                     MarkSelectableShips();
 
@@ -71,35 +70,17 @@ namespace Logic.Gameplay.Rules.GamePhases
                         if (ship != null && _gameplayHandler.IsShipSelectable(ship))
                         {
                             ClearPopups();
-                            _selection = ship;
+                            _gameplayHandler.SelectedShip = ship;
+                            ship.Orderable = true;
                             var cameraOperator = _gameplayHandler.Referee.CameraOperator;
                             cameraOperator.SetCameraPosition(ship.transform.position, cameraOperator.Direction, cameraOperator.Zoom);
-                            
-                            _gameplayHandler.DrawSystemsDisplay(
-                                ship,
-                                (index, system, subsystem) =>
-                                    system.Type == SystemType.Command || system.Type == SystemType.Composite,
-                                (index, system, subsystem, image) =>
+
+                            _gameplayHandler.CreateButton(new Vector2(300, 50), new Vector2(80, 25), "End Phase",
+                                () =>
                                 {
-                                    switch (system.Type)
-                                    {
-                                        case SystemType.Composite:
-                                            ship.Subsystem[index] =
-                                                (ship.Subsystem[index] + 1) % system.SubSystems.Length;
-                                            _gameplayHandler.Referee.FlashMessage(string.Format("Set {0:} to {1:}", system.name,
-                                                system.SubSystems[ship.Subsystem[index]].name));
-                                            var texture2D = system.SubSystems[ship.Subsystem[index]].Icon;
-                                            image.sprite = texture2D;
-                                            break;
-                                        case SystemType.Command:
-                                            _gameplayHandler.Referee.FlashMessage("Would add an order");
-                                            break;
-                                    }
-                                },
-                                selectedShip =>
-                                {
-                                    if (selectedShip.Systems.Where((t, i) =>
-                                        t.System.Type == SystemType.Composite && !selectedShip.Damage[i] && selectedShip.Subsystem[i] == -1).Any())
+                                    if (_gameplayHandler.SelectedShip.Systems.Where((t, i) =>
+                                        t.System.Type == SystemType.Composite && !_gameplayHandler.SelectedShip.Damage[i] &&
+                                        _gameplayHandler.SelectedShip.Subsystem[i] == -1).Any())
                                     {
                                         _gameplayHandler.Referee.FlashMessage(
                                             "All composite systems must be set to one of their options");
@@ -107,10 +88,11 @@ namespace Logic.Gameplay.Rules.GamePhases
                                     }
 
                                     _gameplayHandler.ClearSystemsDisplay();
-                                    _selection = null;
-                                    selectedShip.CalculateThrust();
-                                    _gameplayHandler.RemoveShipFromCurrentStep(selectedShip);
-                                    BroadcastShipCommandState(selectedShip);
+                                    _gameplayHandler.SelectedShip.Orderable = false;
+                                    _gameplayHandler.SelectedShip.CalculateThrust();
+                                    _gameplayHandler.RemoveShipFromCurrentStep(_gameplayHandler.SelectedShip);
+                                    BroadcastShipCommandState(_gameplayHandler.SelectedShip);
+                                    _gameplayHandler.SelectedShip = null;
                                     ClearPopups();
 
                                     _gameplayHandler.NextPlayer();
