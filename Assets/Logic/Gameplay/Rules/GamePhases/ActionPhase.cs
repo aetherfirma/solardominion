@@ -251,6 +251,7 @@ namespace Logic.Gameplay.Rules.GamePhases
             _gameplayHandler.RemoveShipFromCurrentStep(_gameplayHandler.SelectedShip);
             BroadcastEndOfAction(_gameplayHandler.SelectedShip);
             DestroyRangeMarker();
+            _gameplayHandler.SelectedShip.Card.ClearSelected();
             _gameplayHandler.SelectedShip = null;
             _gameplayHandler.NextPlayer();
         }
@@ -334,37 +335,50 @@ namespace Logic.Gameplay.Rules.GamePhases
 
         private void ResolveAttack(Ship firingShip, int shots, int damage, Ship targetShip, int defenderPool)
         {
-            var attackerResults = _gameplayHandler.Referee.Rng.D6(shots);
+            var refereeRng = _gameplayHandler.Referee.Rng;
+
+            if (firingShip.FirstShipFiredAt == null) firingShip.FirstShipFiredAt = targetShip;
+
+            var bracing = targetShip.UnderOrders && targetShip.Order == Order.BraceForImpact;
+            var locked = firingShip.UnderOrders && firingShip.Order == Order.LockOnTarget && targetShip == firingShip.FirstShipFiredAt;
+            var unprepared = firingShip.UnderOrders && (firingShip.Order == Order.LockOnTarget && targetShip != firingShip.FirstShipFiredAt || firingShip.Order == Order.BraceForImpact);
+
+            var attackerResults = refereeRng.D6(shots);
+            if (locked) attackerResults = attackerResults.RerollFailures(firingShip.Training, refereeRng);
+            else if (unprepared) attackerResults = attackerResults.RerollSuccesses(firingShip.Training, refereeRng);
             var attackerSuccesses = attackerResults.Successes(firingShip.Training);
             
             _gameplayHandler.Referee.Popup.Clone(
                 string.Format(
-                    "{0} has rolled {1} for {2} success{3}", 
+                    "{0} has rolled {1}{4}\nfor {2} success{3}", 
                     firingShip.Name(), 
-                    string.Join(", ", attackerResults.Select(v => v.ToString()).ToArray()), 
+                    attackerResults.DescribeDiceRolls(),
                     attackerSuccesses, 
-                    attackerSuccesses == 1 ? "" : "s"
+                    attackerSuccesses == 1 ? "" : "es",
+                    locked ? ", rerolling failures," : (unprepared ? ", rerolling successes,": "")
                 ),
                 firingShip.Position, 0.5f, 5
             );
             
-            var defenderResults = _gameplayHandler.Referee.Rng.D6(defenderPool);
+            var defenderResults = refereeRng.D6(defenderPool);
+            if (bracing) defenderResults = defenderResults.RerollFailures(targetShip.Training, refereeRng);
             var defenderSuccesses = defenderResults.Successes(targetShip.Training);
             var result = attackerSuccesses - defenderSuccesses;
             if (result > 0)
             {
                 var totalDamage = result * damage;
-                targetShip.TakeDamage(_gameplayHandler.Referee.Rng, totalDamage);
+                targetShip.TakeDamage(refereeRng, totalDamage);
                 if (targetShip.Alive)
                 {
                     _gameplayHandler.Referee.Popup.Clone(
                         string.Format(
-                            "{0} has rolled {1} for {2} success{3}, taking {4} damage", 
+                            "{0} has rolled {1}{5}\nfor {2} success{3} and took {4} damage", 
                             targetShip.Name(), 
-                            string.Join(", ", defenderResults.Select(v => v.ToString()).ToArray()), 
+                            defenderResults.DescribeDiceRolls(),
                             defenderSuccesses, 
-                            defenderSuccesses == 1 ? "" : "s",
-                            totalDamage
+                            defenderSuccesses == 1 ? "" : "es",
+                            totalDamage,
+                            bracing ? ", rerolling failures," : ""
                         ),
                         targetShip.Position, 0.5f, 5
                     );
@@ -378,11 +392,12 @@ namespace Logic.Gameplay.Rules.GamePhases
                 {
                     _gameplayHandler.Referee.Popup.Clone(
                         string.Format(
-                            "{0} has rolled {1} for {2} success{3} and was destroyed", 
+                            "{0} has rolled {1}{4}\nfor {2} success{3} and was destroyed", 
                             targetShip.Name(), 
-                            string.Join(", ", defenderResults.Select(v => v.ToString()).ToArray()), 
+                            defenderResults.DescribeDiceRolls(),
                             defenderSuccesses, 
-                            defenderSuccesses == 1 ? "" : "s"
+                            defenderSuccesses == 1 ? "" : "es",
+                            bracing ? ", rerolling failures," : ""
                         ),
                         targetShip.Position, 0.5f, 5
                     );
@@ -393,11 +408,12 @@ namespace Logic.Gameplay.Rules.GamePhases
             {
                 _gameplayHandler.Referee.Popup.Clone(
                     string.Format(
-                        "{0} has rolled {1} for {2} success{3} and took no damage", 
+                        "{0} has rolled {1}{4}\n for {2} success{3} and took no damage", 
                         targetShip.Name(), 
-                        string.Join(", ", defenderResults.Select(v => v.ToString()).ToArray()), 
+                        defenderResults.DescribeDiceRolls(),
                         defenderSuccesses, 
-                        defenderSuccesses == 1 ? "" : "s"
+                        defenderSuccesses == 1 ? "" : "es",
+                        bracing ? ", rerolling failures," : ""
                     ),
                     targetShip.Position, 0.5f, 5
                 );

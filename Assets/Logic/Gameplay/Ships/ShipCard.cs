@@ -345,7 +345,7 @@ namespace Logic.Gameplay.Ships
             _knownUnderOrder = Ship.UnderOrders;
             _knownOrderable = Ship.Orderable;
 
-            if (Ship.Orderable)
+            if (Ship.Orderable && Ship.CanIssueOrders())
             {
                 if (Ship.UnderOrders)
                 {

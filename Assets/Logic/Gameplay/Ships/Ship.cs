@@ -34,6 +34,7 @@ namespace Logic.Gameplay.Ships
         public bool Deployed;
         public int ThrustRemaining;
         public ShipCard Card;
+        public Ship FirstShipFiredAt;
         [Range(2, 6)] public int MinimumTraining;
         [Range(2, 6)] public int MaximumTraining;
 
@@ -112,15 +113,24 @@ namespace Logic.Gameplay.Ships
         {
             ThrustRemaining = Systems
                 .Select(GetSystemOrSubsystem)
-                .Where(system => system.Type == SystemType.Engine)
+                .Where((system, index) => system.Type == SystemType.Engine && !Damage[index])
                 .Sum(system => system.Thrust);
+            if (UnderOrders && Order == Order.MilitaryThrust) ThrustRemaining *= 2;
+        }
+
+        public bool CanIssueOrders()
+        {
+            return Systems
+                .Select(GetSystemOrSubsystem)
+                .Where((system, index) => system.Type == SystemType.Command && !Damage[index])
+                .Any();
         }
 
         private ShipSystem GetSystemOrSubsystem(ShipSystemPosition system, int index)
         {
             if (system.System.Type == SystemType.Composite)
             {
-                if (Damage[index]) return system.System;
+                if (Damage[index] || Subsystem[index] == -1) return system.System;
                 return system.System.SubSystems[Subsystem[index]];
             }
             return system.System;
@@ -130,7 +140,7 @@ namespace Logic.Gameplay.Ships
         {
             return Systems
                 .Select(GetSystemOrSubsystem)
-                .Where(system => system.Type == SystemType.Defence)
+                .Where((system, index) => system.Type == SystemType.Defence && !Damage[index])
                 .Sum(system => system.Defence);
         }
 
@@ -156,6 +166,8 @@ namespace Logic.Gameplay.Ships
         public void SetInitiative(WellRng rng)
         {
             Initiative = Training + rng.D6();
+            UnderOrders = false;
+            FirstShipFiredAt = null;
             for (var i = 0; i < Systems.Length; i++)
             {
                 Subsystem[i] = -1;

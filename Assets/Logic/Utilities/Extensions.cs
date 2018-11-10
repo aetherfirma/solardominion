@@ -93,6 +93,35 @@ namespace Logic.Utilities
             return rolls.Count(r => r >= training);
         }
 
+        public static int[] RerollFailures(this int[] rolls, int training, WellRng rng)
+        {
+            var successes = rolls.Where(r => r >= training).ToList();
+            successes.AddRange(rng.D6(rolls.Length - successes.Count));
+            return successes.ToArray();
+        }
+
+        public static int[] RerollSuccesses(this int[] rolls, int training, WellRng rng)
+        {
+            var failures = rolls.Where(r => r < training).ToList();
+            failures.AddRange(rng.D6(rolls.Length - failures.Count));
+            return failures.ToArray();
+        }
+
+        public static string DescribeDiceRolls(this int[] rolls)
+        {
+            var simple = string.Join(", ", rolls.Select(v => v.ToString()).ToArray());
+            
+            var results = new DictionaryWithDefault<int, int>(0);
+            foreach (var roll in rolls)
+            {
+                results[roll] += 1;
+            }
+
+            var complex = string.Join(", ", results.Select(pair => string.Format("{1} {0}s", pair.Key, pair.Value)).ToArray());
+
+            return complex.Length >= simple.Length ? simple : complex;
+        }
+
         public static void BasicAuth(this UnityWebRequest request, string username, string password)
         {
             request.SetRequestHeader("Authorization",

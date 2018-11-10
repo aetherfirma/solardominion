@@ -40,6 +40,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                             if (turn.order != null)
                             {
                                 ship.Order = (Order) turn.order;
+                                ship.UnderOrders = true;
                             }
 
                             foreach (var system in turn.system_status.Keys)
@@ -131,7 +132,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                 action = TurnType.CommandPhase,
                 player = ship.Player.Uuid,
                 ship = ship.ShipUuid,
-                system_status = new Dictionary<int, int>()
+                system_status = new Dictionary<int, int>(),
             };
 
             if (ship.UnderOrders) turn.order = ship.Order;
