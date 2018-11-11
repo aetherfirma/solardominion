@@ -2,6 +2,7 @@
 using System.Linq;
 using Logic.Display;
 using Logic.Gameplay.Ships;
+using Logic.Maths;
 using Logic.Network;
 using Logic.Utilities;
 using UnityEngine;
@@ -78,6 +79,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                             ship.ThrustRemaining -= thrust;
                             var movementDelta = newPosition - ship.Position;
                             ship.Speed = Mathf.CeilToInt(movementDelta.magnitude / 5f);
+                            AsteroidDamage(ship, newPosition);
                             ship.Position = newPosition;
                             ship.transform.rotation = Quaternion.LookRotation(movementDelta);
 
@@ -216,6 +218,7 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                         _selection.ThrustRemaining -= thrust;
                         _selection.Speed = newSpeed;
+                        AsteroidDamage(_selection, targetLocation);
                         _selection.Position = targetLocation;
                         _selection.transform.rotation = eventualRotation;
                         BroadcastMovement(_selection);
@@ -223,6 +226,32 @@ namespace Logic.Gameplay.Rules.GamePhases
                         _selection = null;
                         ClearPopups();
                         _gameplayHandler.NextPlayer();
+                    }
+                }
+            }
+        }
+
+        private void AsteroidDamage(Ship ship, Vector3 newPosition)
+        {
+            var rng = _gameplayHandler.Referee.Rng;
+
+            foreach (var asteroidField in _gameplayHandler.Referee.AsteroidFields)
+            {
+                if (asteroidField.Location.DistanceToLine(ship.Position, newPosition) <= asteroidField.Size + 2.5f)
+                {
+                    var damage = rng.D6() - 1;
+                    if (damage > 0)
+                    {
+                        ship.TakeDamage(rng, damage);
+                        if (!ship.Alive)
+                        {
+                            _gameplayHandler.DestroyShip(ship);
+                            _gameplayHandler.Referee.Popup.Clone(string.Format("{0} has hit an asteroid and was destroyed", ship.Name()), asteroidField.Location, 0.5f, 5);
+                        }
+                        else
+                        {
+                            _gameplayHandler.Referee.Popup.Clone(string.Format("{0} has hit an asteroid and took {1} damage", ship.Name(), damage), asteroidField.Location, 0.5f, 5);                        
+                        }
                     }
                 }
             }

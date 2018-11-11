@@ -294,14 +294,14 @@ namespace Logic.Gameplay.Ships
             return new ShipJson(UUID, Training, ShipUuid);
         }
 
-        public void TakeDamage(WellRng rng, int result)
+        public void TakeDamage(WellRng rng, int damage)
         {
-            while (result > 0 && Alive)
+            while (damage > 0 && Alive)
             {
                 var systemToDamage =
                     Damage.Select((damaged, index) => damaged ? -1 : index).Where(i => i >= 0).Random(rng);
                 Damage[systemToDamage] = true;
-                result--;
+                damage--;
             }
         }
 

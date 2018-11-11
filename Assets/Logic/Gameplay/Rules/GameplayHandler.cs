@@ -5,6 +5,7 @@ using Logic.Display;
 using Logic.Gameplay.Players;
 using Logic.Gameplay.Rules.GamePhases;
 using Logic.Gameplay.Ships;
+using Logic.Maths;
 using Logic.Network;
 using Logic.Ui;
 using Logic.Utilities;
@@ -56,6 +57,60 @@ namespace Logic.Gameplay.Rules
             if (ship.Initiative == _currentInitiativeStep) RemoveShipFromCurrentStep(ship);
             Object.Instantiate(Referee.ShipDestroyedExplosion, ship.transform.position, Quaternion.identity);
             ship.gameObject.SetActive(false);
+
+            int exlosionRangeDice;
+
+            switch (ship.Class)
+            {
+                case ShipSize.StrikeCraft:
+                    return;
+                case ShipSize.Corvette:
+                    exlosionRangeDice = 2;
+                    break;
+                case ShipSize.Frigate:
+                    exlosionRangeDice = 3;
+                    break;
+                case ShipSize.Destroyer:
+                    exlosionRangeDice = 3;
+                    break;
+                case ShipSize.Cruiser:
+                    exlosionRangeDice = 4;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            var rng = Referee.Rng;
+            var explosionRange = rng.D6(exlosionRangeDice).Sum();
+
+            var shipsToExplode = new List<Ship>();
+
+            foreach (var player in Referee.Players)
+            {
+                foreach (var candidateShip in player.Fleet)
+                {
+                    if (candidateShip == ship || !candidateShip.Alive || candidateShip.Position.Distance(ship.Position) > explosionRange) continue;
+                    var damage = rng.D6() - 1;
+                    if (damage > 0)
+                    {
+                        candidateShip.TakeDamage(rng, damage);
+                        if (!candidateShip.Alive)
+                        {
+                            shipsToExplode.Add(candidateShip);
+                            Referee.Popup.Clone(string.Format("{0} was destroyed in the explosion", candidateShip.Name()), candidateShip.Position, 0.5f, 5);
+                        }
+                        else
+                        {
+                            Referee.Popup.Clone(string.Format("{0} took {1} damage in the explosion", candidateShip.Name(), damage), candidateShip.Position, 0.5f, 5);                        
+                        }
+                    }
+                }
+            }
+
+            foreach (var explodingShip in shipsToExplode)
+            {
+                DestroyShip(explodingShip);
+            }
         }
 
         private Dictionary<Player, List<Ship>> DetermineShipsThatCanAct()

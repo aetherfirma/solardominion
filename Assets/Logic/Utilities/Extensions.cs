@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using Logic.Maths;
 using UnityEngine;
@@ -126,6 +127,18 @@ namespace Logic.Utilities
         {
             request.SetRequestHeader("Authorization",
                 string.Format("Basic {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", username, password)))));
+        }
+
+        public static float Distance(this Vector3 a, Vector3 b)
+        {
+            return (a - b).magnitude;
+        }
+
+        public static float DistanceToLine(this Vector3 p0, Vector3 p1, Vector3 p2)
+        {
+            var upper = (p2.y - p1.y) * p0.x - (p2.x - p1.x) * p0.y + p2.x * p1.y - p2.y * p1.x;
+            var lower = Mathf.Pow(p2.y - p1.y, 2) + Mathf.Pow(p2.x - p1.x, 2);
+            return Mathf.Abs(upper) / Mathf.Sqrt(lower);
         }
     }
 
