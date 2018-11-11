@@ -76,7 +76,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                             var cameraOperator = _gameplayHandler.Referee.CameraOperator;
                             cameraOperator.SetCameraPosition(ship.transform.position, cameraOperator.Direction, cameraOperator.Zoom);
 
-                            _gameplayHandler.CreateButton(new Vector2(300, 50), new Vector2(80, 25), "End Phase",
+                            _gameplayHandler.Referee.CreateButton(new Vector2(300, 50), new Vector2(80, 25), "End Phase",
                                 () =>
                                 {
                                     if (_gameplayHandler.SelectedShip.Systems.Where((t, i) =>
@@ -97,8 +97,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                                     ClearPopups();
 
                                     _gameplayHandler.NextPlayer();
-                                }
-                            );
+                                }, _gameplayHandler.LowerBar);
                         }
                     }
                 }

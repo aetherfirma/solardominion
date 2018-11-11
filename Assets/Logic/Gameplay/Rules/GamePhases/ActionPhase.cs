@@ -92,7 +92,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                     shipCard.SelectionCallback = ActionPhaseSelectionCallback;
                     shipCard.DeselectionCallback = ActionPhaseDeselectionCallback;
                     FindSelectableSystems(shipCard);
-                    _gameplayHandler.CreateButton(new Vector2(300, 50), new Vector2(80, 25), "End Phase", OnComplete);
+                    _gameplayHandler.Referee.CreateButton(new Vector2(300, 50), new Vector2(80, 25), "End Phase", OnComplete, _gameplayHandler.LowerBar);
                 }
             }
         }
@@ -235,7 +235,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                         _target = null;
                         _gameplayHandler.ShowShipCards = true;
                         FindSelectableSystems(_gameplayHandler.SelectedShip.Card);
-                        _gameplayHandler.CreateButton(new Vector2(300, 50), new Vector2(80, 25), "End Phase", OnComplete);
+                        _gameplayHandler.Referee.CreateButton(new Vector2(300, 50), new Vector2(80, 25), "End Phase", OnComplete, _gameplayHandler.LowerBar);
                     }
 
                     _gameplayHandler.Referee.LastObservedInstruction = i + 1;
@@ -286,10 +286,10 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                         var shipDefenceModifier = targetShip.CalculateDefensiveModifier();
                         var turnDefenceModifier = turn.defence_modifier + shipDefenceModifier;
-                        var defenceIndicator = _gameplayHandler.CreateText(_gameplayHandler.LowerBar, new Vector2(90, 45),
+                        var defenceIndicator = _gameplayHandler.Referee.CreateText(_gameplayHandler.LowerBar, new Vector2(90, 45),
                             string.Format("{0:} + {1:} + 0/{2:} = {3:}", turn.defence_modifier, shipDefenceModifier, targetShip.ThrustRemaining, turnDefenceModifier));
 
-                        _gameplayHandler.CreateButton(new Vector2(95, 0), new Vector2(45, 45), "+",
+                        _gameplayHandler.Referee.CreateButton(new Vector2(95, 0), new Vector2(45, 45), "+",
                             () =>
                             {
                                 if (thrustToSpend >= targetShip.ThrustRemaining) return;
@@ -298,8 +298,8 @@ namespace Logic.Gameplay.Rules.GamePhases
                                     string.Format("{0:} + {1:} + {2:}/{3:} = {4:}",
                                         turn.defence_modifier, shipDefenceModifier, thrustToSpend,
                                         targetShip.ThrustRemaining, turnDefenceModifier + thrustToSpend);
-                            });
-                        _gameplayHandler.CreateButton(new Vector2(-95, 0), new Vector2(45, 45), "-",
+                            }, _gameplayHandler.LowerBar);
+                        _gameplayHandler.Referee.CreateButton(new Vector2(-95, 0), new Vector2(45, 45), "-",
                             () => {
                                 if (thrustToSpend <= 0) return;
                                 thrustToSpend--;
@@ -307,9 +307,9 @@ namespace Logic.Gameplay.Rules.GamePhases
                                     string.Format("{0:} + {1:} + {2:}/{3:} = {4:}",
                                         turn.defence_modifier, shipDefenceModifier, thrustToSpend,
                                         targetShip.ThrustRemaining, turnDefenceModifier + thrustToSpend);
-                            });
+                            }, _gameplayHandler.LowerBar);
 
-                        _gameplayHandler.CreateButton(new Vector2(0, -55), new Vector2(135, 35),
+                        _gameplayHandler.Referee.CreateButton(new Vector2(0, -55), new Vector2(135, 35),
                             "Commit Defence",
                             () =>
                             {
@@ -324,7 +324,7 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                                 _gameplayHandler.ShowShipCards = true;
                                 ResolveAttack(firingShip, shots, damage, targetShip, defenderPool);
-                            });
+                            }, _gameplayHandler.LowerBar);
 
                     }
 

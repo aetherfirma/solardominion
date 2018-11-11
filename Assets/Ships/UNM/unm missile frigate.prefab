@@ -321,10 +321,14 @@ MonoBehaviour:
   Training: 0
   Initiative: 0
   UnderOrders: 0
+  Orderable: 0
   Fleeing: 0
   Fled: 0
   Order: 0
   Deployed: 0
   ThrustRemaining: 0
+  Card: {fileID: 0}
+  FirstShipFiredAt: {fileID: 0}
+  ShipIcon: {fileID: 21300008, guid: 135b9f9de9530d94dabc1dd324648044, type: 3}
   MinimumTraining: 3
   MaximumTraining: 4

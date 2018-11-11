@@ -55,9 +55,11 @@ namespace Logic.Gameplay.Rules
         public RectTransform LowerBar;
         public RectTransform TurnIndicator;
         public RectTransform FullArrow, OutlineArrow;
+        public RectTransform ListBuilderUi, ShipListing, RosterListing;
         public Sprite ButtonSprite;
         public ShipCard ShipCard;
         public Font StandardFont;
+        public TMP_FontAsset DefaultFont;
         public string ServerUrl;
 
         private ListBuilder _listBuilder;
@@ -409,6 +411,46 @@ namespace Logic.Gameplay.Rules
 
             CameraOperator.SetCameraPosition(location, direction, zoom);
             CameraOperator.EnforceCameraBoundaries(PlayArea);
+        }
+
+        public GameObject CreateButton(Vector2 position, Vector2 size, string buttonText, Action onClick, RectTransform parent)
+        {
+            var done = new GameObject("done button", typeof(Image), typeof(Button));
+            done.SetAsChild(parent);
+
+            var rectTransform = done.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = position;
+            rectTransform.sizeDelta = size;
+
+            var iconImage = done.GetComponent<Image>();
+            iconImage.sprite = ButtonSprite;
+
+            var button = done.GetComponent<Button>();
+            button.image = iconImage;
+            button.onClick.AddListener(() => onClick());
+
+            CreateText(done.transform, size, buttonText);
+
+            return done;
+        }
+
+        public GameObject CreateText(Transform parent, Vector2 size, string buttonText)
+        {
+            var textObj = new GameObject("Text", typeof(TextMeshProUGUI));
+            textObj.SetAsChild(parent);
+
+            var component = textObj.GetComponent<RectTransform>();
+            component.sizeDelta = size;
+            component.anchoredPosition = Vector2.zero;
+
+            var text = textObj.GetComponent<TextMeshProUGUI>();
+            text.color = Color.white;
+            text.alignment = TextAlignmentOptions.Center;
+            text.text = buttonText;
+            text.font = DefaultFont;
+            text.fontSize = 14;
+
+            return textObj;
         }
     }
 }

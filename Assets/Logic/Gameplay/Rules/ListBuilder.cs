@@ -6,6 +6,7 @@ using Logic.Gameplay.Ships;
 using Logic.Maths;
 using Logic.Network;
 using Logic.Utilities;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -17,7 +18,11 @@ namespace Logic.Gameplay.Rules
     {
         private bool _factionSelected, _factionSetup, _setup;
         private readonly Referee _referee;
+        private TextMeshProUGUI _title;
+        private RectTransform _ui;
         private List<GameObject> _itemsForRemoval;
+        private Transform _roster;
+        private Transform _shipList;
 
         public ListBuilder(Referee referee)
         {
@@ -55,8 +60,16 @@ namespace Logic.Gameplay.Rules
             {
                 ClearItems();
 
-                var finishListButton = Object.Instantiate(_referee.LowerButton, _referee.UiCanvas);
-                _itemsForRemoval.Add(finishListButton.gameObject);
+                _ui = Object.Instantiate(_referee.ListBuilderUi, _referee.UiCanvas);
+                _itemsForRemoval.Add(_ui.gameObject);
+                _title = _ui.Find("Ships/Title").GetComponent<TextMeshProUGUI>();
+
+                var finishListButton = _ui.Find("Finish Button").GetComponent<Button>();
+
+                _shipList = _ui.Find("Ships/Scroll View/Viewport/Content");
+                _roster = _ui.Find("Fleet/Scroll View/Viewport/Content");
+
+                RecalculateFleetListing();
 
                 finishListButton.onClick.AddListener(delegate
                 {
@@ -67,14 +80,16 @@ namespace Logic.Gameplay.Rules
                     wwwForm.AddField("roster", _referee.Players[_referee.LocalPlayer].FleetJson());
 
                     SimpleRequest.Post(
-                        _referee.ServerUrl + "/game/" + _referee.GameUuid + "/roster", _referee.Username, _referee.Password, wwwForm,
+                        _referee.ServerUrl + "/game/" + _referee.GameUuid + "/roster", _referee.Username,
+                        _referee.Password, wwwForm,
                         www =>
                         {
                             _referee.SetGameState(GameResponse.FromJson(www.downloadHandler.text));
                             _referee.Phase = GamePhase.Waiting;
                         },
-                        www => _referee.FlashMessage("There was a server error (" + www.responseCode +  ") creating a game\n"+www.error),
-                        www => _referee.FlashMessage("There was a network error creating a game\n"+www.error)
+                        www => _referee.FlashMessage("There was a server error (" + www.responseCode +
+                                                     ") creating a game\n" + www.error),
+                        www => _referee.FlashMessage("There was a network error creating a game\n" + www.error)
                     );
                 });
 
@@ -83,87 +98,112 @@ namespace Logic.Gameplay.Rules
                 {
                     var ship = factionShips[n];
 
-                    var selectable = Object.Instantiate(ship, _referee.Camera.transform);
-                    _itemsForRemoval.Add(selectable.gameObject);
-                    selectable.transform.localPosition =
-                        new Vector3(-2.5f + 5f / (factionShips.Length - 1) * n, -1, 3.5f);
-                    selectable.Position = selectable.transform.position;
-                    selectable.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-                    selectable.transform.rotation = Quaternion.Euler(0, 180 - 45, 0);
+                    var shipListing = Object.Instantiate(_referee.ShipListing, _shipList);
+                    shipListing.localPosition = new Vector2(0, -110 * n);
 
-                    Vector2 viewportPoint = _referee.Camera.WorldToViewportPoint(selectable.transform.position);
-                    var screenPoint = new Vector2(
-                        viewportPoint.x * _referee.UiCanvas.sizeDelta.x - _referee.UiCanvas.sizeDelta.x * 0.5f,
-                        viewportPoint.y * _referee.UiCanvas.sizeDelta.y - _referee.UiCanvas.sizeDelta.y * 0.5f);
+                    shipListing.Find("Ship Icon").GetComponent<Image>().sprite = ship.ShipIcon;
 
-                    for (var training = selectable.MinimumTraining; training <= selectable.MaximumTraining; training++)
+                    var costs = "";
+
+                    for (var training = ship.MinimumTraining; training <= ship.MaximumTraining; training++)
                     {
+                        if (costs != "") costs += ", ";
+                        costs += string.Format("{0} points at rating {1}", ship.CalculateCost(training), training);
+                        
                         var unmodifiedTraining = training;
-                        var selection = Object.Instantiate(_referee.SelectionPanel, _referee.UiCanvas);
-                        _itemsForRemoval.Add(selection.gameObject);
-                        selection.anchoredPosition =
-                            screenPoint + new Vector2(0, +(training - selectable.MinimumTraining + 1.5f) * 100);
-                        var label = selection.Find("Label").gameObject.GetComponent<Text>();
-                        label.text = string.Format("{0:}\nRating {1:}\n{2:} points", ship.name, training,
-                            ship.CalculateCost(training));
-
-                        selection.Find("Buy Button").gameObject.GetComponent<Button>().onClick.AddListener(delegate
-                        {
-                            // give some kind of feedback
-                            if (_referee.CurrentGameState.points_limit - _referee.Players[_referee.LocalPlayer].FleetCost() <
-                                ship.CalculateCost(unmodifiedTraining)) return;
-
-                            var oldLength = _referee.Players[_referee.LocalPlayer].Fleet.Length;
-                            Array.Resize(ref _referee.Players[_referee.LocalPlayer].Fleet, oldLength + 1);
-                            var newShip = ship.Initialise(unmodifiedTraining, _referee.Players[_referee.LocalPlayer]);
-                            _referee.Players[_referee.LocalPlayer].Fleet[oldLength] = newShip;
-
-                            label.text = string.Format("{0:}\nRating {1:}\n{2:} points\n{3:} in fleet", ship.name,
-                                unmodifiedTraining,
-                                ship.CalculateCost(unmodifiedTraining), _referee.Players[_referee.LocalPlayer].Fleet
-                                    .Sum(s =>
-                                        s.name == ship.name && s.Training == unmodifiedTraining ? 1 : 0));
-                        });
-
-                        selection.Find("Remove Button").gameObject.GetComponent<Button>().onClick.AddListener(delegate
-                        {
-                            var newFleet = new Ship[_referee.Players[_referee.LocalPlayer].Fleet.Length - 1];
-                            var removed = false;
-                            var i = 0;
-                            foreach (var ship1 in _referee.Players[_referee.LocalPlayer].Fleet)
+                        var button = _referee.CreateButton(Vector2.zero, new Vector2(125, 40),
+                            string.Format("Buy at rating {0}", training),
+                            () =>
                             {
-                                if (!removed && ship1.UUID == ship.UUID && ship1.Training == unmodifiedTraining)
+                                if (_referee.CurrentGameState.points_limit -
+                                    _referee.Players[_referee.LocalPlayer].FleetCost() <
+                                    ship.CalculateCost(unmodifiedTraining))
                                 {
-                                    removed = true;
-                                    Object.Destroy(ship1.gameObject);
+                                    _referee.FlashMessage("Insufficient points remaining");
+                                    return;
                                 }
-                                else
-                                {
-                                    newFleet[i++] = ship1;
-                                }
-                            }
 
-                            _referee.Players[_referee.LocalPlayer].Fleet = newFleet;
+                                var oldLength = _referee.Players[_referee.LocalPlayer].Fleet.Length;
+                                Array.Resize(ref _referee.Players[_referee.LocalPlayer].Fleet, oldLength + 1);
+                                var newShip = ship.Initialise(unmodifiedTraining,
+                                    _referee.Players[_referee.LocalPlayer]);
+                                _referee.Players[_referee.LocalPlayer].Fleet[oldLength] = newShip;
 
-                            var shipsRemaining = _referee.Players[_referee.LocalPlayer].Fleet.Sum(s =>
-                                s.name == ship.name && s.Training == unmodifiedTraining ? 1 : 0);
-                            if (shipsRemaining > 0)
-                                label.text = string.Format("{0:}\nRating {1:}\n{2:} points\n{3:} in fleet", ship.name,
-                                    unmodifiedTraining,
-                                    ship.CalculateCost(unmodifiedTraining), shipsRemaining);
-                            else
-                                label.text = string.Format("{0:}\nRating {1:}\n{2:} points", ship.name,
-                                    unmodifiedTraining,
-                                    ship.CalculateCost(unmodifiedTraining));
-                        });
+                                RecalculateFleetListing();
+                            },
+                            shipListing
+                        ).GetComponent<RectTransform>();
+                        button.anchorMin = new Vector2(1, 0.5f);
+                        button.anchorMax = new Vector2(1, 0.5f);
+                        button.anchoredPosition = new Vector2(-75, 22 - 44 * (training - ship.MinimumTraining));
                     }
+
+                    shipListing.Find("Ship Description").GetComponent<TextMeshProUGUI>().text = string.Format(
+                        "<b><size=24>{0} {1}</size><b>\n{2}\nEquipped with {3}",
+                        ship.ClassVariant, ship.Class,
+                        costs,
+                        ship.Systems.Select(system => system.System.name).ToArray().DescribeList()
+                    );
+
                 }
+
+                var content = _shipList.GetComponent<RectTransform>();
+                content.sizeDelta = new Vector2(content.sizeDelta.x, 110 * factionShips.Length);
 
                 _setup = true;
             }
+        }
 
-            _referee.DisplayUpperText(string.Format("{0:} Points Remaining",
-                _referee.CurrentGameState.points_limit - _referee.Players[_referee.LocalPlayer].FleetCost()));
+        private void RecalculateFleetListing()
+        {
+            _title.text = string.Format("Fleet Builder - {0} Points Left",
+                _referee.CurrentGameState.points_limit - _referee.Players[_referee.LocalPlayer].FleetCost());
+
+            _roster.DestroyAllChildren();
+
+            var n = 0;
+            foreach (var ship in _referee.Players[_referee.LocalPlayer].Fleet)
+            {
+                var listing = Object.Instantiate(_referee.RosterListing, _roster);
+                listing.localPosition = new Vector3(0, -n);
+                n += 110;
+                listing.Find("Ship Icon").GetComponent<Image>().sprite = ship.ShipIcon;
+                listing.Find("Ship Description").GetComponent<TextMeshProUGUI>().text = string.Format(
+                    "<b><size=16>{0}</size>\n{1} points<b>\n{2} {3}",
+                    ship.Name(),
+                    ship.CalculateCost(ship.Training),
+                    ship.ClassVariant,
+                    ship.Class
+                );
+
+                var thisShip = ship;
+
+                listing.Find("Remove Button").GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    var newFleet = new Ship[_referee.Players[_referee.LocalPlayer].Fleet.Length - 1];
+                    var removed = false;
+                    var i = 0;
+                    foreach (var ship1 in _referee.Players[_referee.LocalPlayer].Fleet)
+                    {
+                        if (!removed && ship1.UUID == thisShip.UUID && ship1.Training == thisShip.Training)
+                        {
+                            removed = true;
+                            Object.Destroy(ship1.gameObject);
+                        }
+                        else
+                        {
+                            newFleet[i++] = ship1;
+                        }
+                    }
+
+                    _referee.Players[_referee.LocalPlayer].Fleet = newFleet;
+
+                    RecalculateFleetListing();
+                });
+            }
+            
+            var content = _roster.GetComponent<RectTransform>();
+            content.sizeDelta = new Vector2(content.sizeDelta.x, n);
         }
 
         private void ClearItems()

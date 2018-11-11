@@ -35,6 +35,7 @@ namespace Logic.Gameplay.Ships
         public int ThrustRemaining;
         public ShipCard Card;
         public Ship FirstShipFiredAt;
+        public Sprite ShipIcon;
         [Range(2, 6)] public int MinimumTraining;
         [Range(2, 6)] public int MaximumTraining;
 

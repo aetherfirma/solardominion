@@ -553,46 +553,6 @@ namespace Logic.Gameplay.Rules
             text.fontSize = 14;
         }
 
-        public GameObject CreateButton(Vector2 position, Vector2 size, string buttonText, Action onClick)
-        {
-            var done = new GameObject("done button", typeof(Image), typeof(Button));
-            done.SetAsChild(LowerBar);
-
-            var rectTransform = done.GetComponent<RectTransform>();
-            rectTransform.anchoredPosition = position;
-            rectTransform.sizeDelta = size;
-
-            var iconImage = done.GetComponent<Image>();
-            iconImage.sprite = Referee.ButtonSprite;
-
-            var button = done.GetComponent<Button>();
-            button.image = iconImage;
-            button.onClick.AddListener(() => onClick());
-
-            CreateText(done.transform, size, buttonText);
-
-            return done;
-        }
-
-        public GameObject CreateText(Transform parent, Vector2 size, string buttonText)
-        {
-            var textObj = new GameObject("Text", typeof(Text));
-            textObj.SetAsChild(parent);
-
-            var component = textObj.GetComponent<RectTransform>();
-            component.sizeDelta = size;
-            component.anchoredPosition = Vector2.zero;
-
-            var text = textObj.GetComponent<Text>();
-            text.color = Color.white;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.text = buttonText;
-            text.font = Referee.StandardFont;
-            text.fontSize = 14;
-
-            return textObj;
-        }
-
         public bool IsShipSelectable(Ship ship)
         {
             return ShipsInInitiativeStep[CurrentPlayer].Contains(ship);

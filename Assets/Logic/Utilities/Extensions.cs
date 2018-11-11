@@ -123,6 +123,21 @@ namespace Logic.Utilities
             return complex.Length >= simple.Length ? simple : complex;
         }
 
+        public static string DescribeList(this string[] strings)
+        {
+            var simple = string.Join(", ", strings.Select(v => v.ToString()).ToArray());
+            
+            var results = new DictionaryWithDefault<string, int>(0);
+            foreach (var str in strings)
+            {
+                results[str] += 1;
+            }
+
+            var complex = string.Join(", ", results.Select(pair => string.Format("{1}x {0}", pair.Key, pair.Value)).ToArray());
+
+            return complex.Length >= simple.Length ? simple : complex;
+        }
+
         public static void BasicAuth(this UnityWebRequest request, string username, string password)
         {
             request.SetRequestHeader("Authorization",
