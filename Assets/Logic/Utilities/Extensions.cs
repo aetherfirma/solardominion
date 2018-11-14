@@ -24,6 +24,11 @@ namespace Logic.Utilities
             return new Vector3(vec2.x, 0, vec2.y);
         }
 
+        public static Vector2 Vec3ToVec2(this Vector3 vec3)
+        {
+            return new Vector2(vec3.x, vec3.y);
+        }
+
         public static Gradient GradientFromColor(this Gradient gradient, Color color)
         {
             gradient.SetKeys(new[] {new GradientColorKey(color, 0), new GradientColorKey(color, 1)},
@@ -151,9 +156,40 @@ namespace Logic.Utilities
 
         public static float DistanceToLine(this Vector3 p0, Vector3 p1, Vector3 p2)
         {
-            var upper = (p2.y - p1.y) * p0.x - (p2.x - p1.x) * p0.y + p2.x * p1.y - p2.y * p1.x;
-            var lower = Mathf.Pow(p2.y - p1.y, 2) + Mathf.Pow(p2.x - p1.x, 2);
+            var upper = (p2.z - p1.z) * p0.x - (p2.x - p1.x) * p0.z + p2.x * p1.z - p2.z * p1.x;
+            var lower = Mathf.Pow(p2.z - p1.z, 2) + Mathf.Pow(p2.x - p1.x, 2);
             return Mathf.Abs(upper) / Mathf.Sqrt(lower);
+        }
+
+        public static Vector3 ClosestPointOnLine(this Vector3 point, Vector3 lineA, Vector3 lineB)
+        {
+            var line = lineB - lineA;
+            var lineNormal = line.normalized;
+            var lineAngle = Mathf.Atan2(lineNormal.z, lineNormal.x);
+
+            var pointLine = point - lineA;
+            var pointNormal = pointLine.normalized;
+            var pointAngle = Mathf.Atan2(pointNormal.z, pointNormal.x);
+
+            var angle = Mathf.Abs(pointAngle - lineAngle);
+            
+            var segmentLength = pointLine.magnitude * Mathf.Cos(angle);
+
+            if (angle > Mathf.PI / 2 || segmentLength > line.magnitude)
+            {
+                return (point - lineA).magnitude < (point - lineB).magnitude ? lineA : lineB;
+            }
+            return lineNormal * segmentLength + lineA;
+            
+//            var distance = pointLine.magnitude * Mathf.Sin(angle);
+        }
+        
+        public static Vector2 NearestPointOnLine(Vector2 linePnt, Vector2 lineDir, Vector2 pnt)
+        {
+            lineDir.Normalize();//this needs to be a unit vector
+            var v = pnt - linePnt;
+            var d = Vector3.Dot(v, lineDir);
+            return linePnt + lineDir * d;
         }
     }
 

@@ -57,13 +57,13 @@ MonoBehaviour:
   - {fileID: 114318547020637492, guid: 6b541d475c80347419348f420a26bac1, type: 2}
   Thrust: 2
   Defence: 2
-  Shots: 6
+  Shots: 5
   Damage: 2
   ShortRange: 10
   ShortModifier: 1
   MediumRange: 20
-  MediumModifier: 2
-  LongRange: 40
+  MediumModifier: 3
+  LongRange: 35
   LongModifier: 5
   Orders: 00000000010000000200000003000000
   Model:

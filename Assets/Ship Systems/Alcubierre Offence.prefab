@@ -60,8 +60,8 @@ MonoBehaviour:
   ShortRange: 20
   ShortModifier: 5
   MediumRange: 40
-  MediumModifier: 2
-  LongRange: 80
+  MediumModifier: 3
+  LongRange: 60
   LongModifier: 4
   Orders: 00000000010000000200000003000000
   Model:

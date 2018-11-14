@@ -57,12 +57,12 @@ MonoBehaviour:
   Defence: 0
   Shots: 1
   Damage: 3
-  ShortRange: 15
-  ShortModifier: 3
+  ShortRange: 10
+  ShortModifier: 4
   MediumRange: 30
   MediumModifier: 2
   LongRange: 60
-  LongModifier: 5
+  LongModifier: 3
   Orders: 00000000010000000200000003000000
   Model:
   - {fileID: 1021880648692204, guid: 6f55671ed6d0e8c4ebf2faf1bcfe289a, type: 2}

@@ -59,7 +59,7 @@ MonoBehaviour:
   Damage: 1
   ShortRange: 15
   ShortModifier: 1
-  MediumRange: 35
+  MediumRange: 30
   MediumModifier: 3
   LongRange: 50
   LongModifier: 5
