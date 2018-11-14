@@ -130,7 +130,9 @@ namespace Logic.Gameplay.Rules
 
         public void RemoveShipFromCurrentStep(Ship ship)
         {
-            if (ShipsInInitiativeStep[ship.Player].Contains(ship)) ShipsInInitiativeStep[ship.Player].Remove(ship);
+            if (!ShipsInInitiativeStep.ContainsKey(ship.Player)) return;
+            if (!ShipsInInitiativeStep[ship.Player].Contains(ship)) return;
+            ShipsInInitiativeStep[ship.Player].Remove(ship);
             if (ShipsInInitiativeStep[ship.Player].Count == 0) ShipsInInitiativeStep.Remove(ship.Player);
         }
 
