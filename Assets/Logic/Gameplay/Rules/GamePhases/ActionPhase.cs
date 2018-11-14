@@ -247,6 +247,7 @@ namespace Logic.Gameplay.Rules.GamePhases
 
         private void OnComplete()
         {
+            _gameplayHandler.SelectedShip.Card.Selectable = new bool[_gameplayHandler.SelectedShip.Card.Selectable.Length];
             _gameplayHandler.ClearSystemsDisplay();
             _gameplayHandler.RemoveShipFromCurrentStep(_gameplayHandler.SelectedShip);
             BroadcastEndOfAction(_gameplayHandler.SelectedShip);
