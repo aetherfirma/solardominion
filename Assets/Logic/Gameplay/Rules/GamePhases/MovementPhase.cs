@@ -235,24 +235,26 @@ namespace Logic.Gameplay.Rules.GamePhases
         {
             var rng = _gameplayHandler.Referee.Rng;
 
+            Debug.DrawLine(ship.Position, newPosition, Color.red, 10);
             foreach (var asteroidField in _gameplayHandler.Referee.AsteroidFields)
             {
-                if (asteroidField.Location.DistanceToLine(ship.Position, newPosition) <= asteroidField.Size + 2.5f)
+                var point = asteroidField.Location.ClosestPointOnLine(ship.Position, newPosition);
+                var distance = asteroidField.Location.Distance(point);
+                Debug.DrawLine(asteroidField.Location, point, Color.blue, 10);
+                
+                if (!(distance <= asteroidField.Size + 2.5f)) continue;
+                var damage = rng.D6() - 1;
+                if (damage <= 0) continue;
+                
+                ship.TakeDamage(rng, damage);
+                if (!ship.Alive)
                 {
-                    var damage = rng.D6() - 1;
-                    if (damage > 0)
-                    {
-                        ship.TakeDamage(rng, damage);
-                        if (!ship.Alive)
-                        {
-                            _gameplayHandler.DestroyShip(ship);
-                            _gameplayHandler.Referee.Popup.Clone(string.Format("{0} has hit an asteroid and was destroyed", ship.Name()), asteroidField.Location, 0.5f, 5);
-                        }
-                        else
-                        {
-                            _gameplayHandler.Referee.Popup.Clone(string.Format("{0} has hit an asteroid and took {1} damage", ship.Name(), damage), asteroidField.Location, 0.5f, 5);                        
-                        }
-                    }
+                    _gameplayHandler.DestroyShip(ship);
+                    _gameplayHandler.Referee.Popup.Clone(string.Format("{0} has hit an asteroid and was destroyed", ship.Name()), asteroidField.Location, 0.5f, 5);
+                }
+                else
+                {
+                    _gameplayHandler.Referee.Popup.Clone(string.Format("{0} has hit an asteroid and took {1} damage", ship.Name(), damage), asteroidField.Location, 0.5f, 5);                        
                 }
             }
         }
