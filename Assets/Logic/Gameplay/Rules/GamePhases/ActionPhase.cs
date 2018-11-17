@@ -6,8 +6,8 @@ using Logic.Gameplay.Ships;
 using Logic.Maths;
 using Logic.Network;
 using Logic.Utilities;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
@@ -295,7 +295,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                             {
                                 if (thrustToSpend >= targetShip.ThrustRemaining) return;
                                 thrustToSpend++;
-                                defenceIndicator.GetComponent<Text>().text =
+                                defenceIndicator.GetComponent<TextMeshProUGUI>().text =
                                     string.Format("{0:} + {1:} + {2:}/{3:} = {4:}",
                                         turn.defence_modifier, shipDefenceModifier, thrustToSpend,
                                         targetShip.ThrustRemaining, turnDefenceModifier + thrustToSpend);
@@ -304,7 +304,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                             () => {
                                 if (thrustToSpend <= 0) return;
                                 thrustToSpend--;
-                                defenceIndicator.GetComponent<Text>().text =
+                                defenceIndicator.GetComponent<TextMeshProUGUI>().text =
                                     string.Format("{0:} + {1:} + {2:}/{3:} = {4:}",
                                         turn.defence_modifier, shipDefenceModifier, thrustToSpend,
                                         targetShip.ThrustRemaining, turnDefenceModifier + thrustToSpend);
