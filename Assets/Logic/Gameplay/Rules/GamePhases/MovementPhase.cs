@@ -29,7 +29,7 @@ namespace Logic.Gameplay.Rules.GamePhases
             {
                 foreach (var ship in _gameplayHandler.ShipsInInitiativeStep[_gameplayHandler.CurrentPlayer])
                 {
-                    _popups.Add(_gameplayHandler.Referee.Popup.Clone("Ready to move", ship.transform.position));
+                    _popups.Add(_gameplayHandler.Referee.Popup.Clone("Ready to move", Vector3.zero, ship.transform));
                 }
             }
         }
@@ -62,7 +62,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                         {
                             var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
                             _gameplayHandler.Referee.Popup.Clone(string.Format("Just recieved movement for {0:}",
-                                ship.Name()), ship.transform.position, 0.5f, 5);
+                                ship.Name()), Vector3.zero, ship.transform, 0.5f, 5);
 
                             var newPosition = new Vector3(turn.location[0], 0, turn.location[1]);
 
@@ -72,7 +72,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                             var thrust = Mathf.CeilToInt(distance.magnitude / ship.DistancePerThrust());
                             if (thrust > ship.ThrustRemaining)
                             {
-                                _gameplayHandler.Referee.Popup.Clone("Cannot move here, insufficient thrust", newPosition, 0.5f, 5);
+                                _gameplayHandler.Referee.Popup.Clone("Cannot move here, insufficient thrust", newPosition, _gameplayHandler.Referee.RootTransform, 0.5f, 5);
                                 return;
                             }
 
@@ -121,7 +121,7 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                             if (ship.Speed * 5 > 6)
                             {
-                                _coastArrow = Object.Instantiate(_gameplayHandler.Referee.OutlineArrow);
+                                _coastArrow = Object.Instantiate(_gameplayHandler.Referee.OutlineArrow, _gameplayHandler.Referee.RootTransform);
                                 _coastArrow.localPosition = ship.Position + ship.transform.rotation * (Vector3.forward * 3) +
                                                             new Vector3(0, -3, 0);
                                 _coastArrow.sizeDelta = new Vector2(256, (ship.Speed * 5 - 6) * 100);
@@ -169,7 +169,7 @@ namespace Logic.Gameplay.Rules.GamePhases
 
                     if (_thrustArrow == null && movementDelta.magnitude > 6)
                     {
-                        _thrustArrow = Object.Instantiate(_gameplayHandler.Referee.FullArrow);
+                        _thrustArrow = Object.Instantiate(_gameplayHandler.Referee.FullArrow, _gameplayHandler.Referee.RootTransform);
                         _thrustArrow.localPosition = _selection.Position + eventualRotation * (Vector3.forward * 3) +
                                                     new Vector3(0, -3, 0);
                         _thrustArrow.sizeDelta = new Vector2(256, (movementDelta.magnitude - 6) * 100);
@@ -195,7 +195,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                     {
                         if (thrust > _selection.ThrustRemaining)
                         {
-                            _gameplayHandler.Referee.Popup.Clone("Cannot move here, insufficient thrust", targetLocation, 0.5f, 5);
+                            _gameplayHandler.Referee.Popup.Clone("Cannot move here, insufficient thrust", targetLocation, _gameplayHandler.Referee.RootTransform, 0.5f, 5);
                             return;
                         }
                         
@@ -250,11 +250,11 @@ namespace Logic.Gameplay.Rules.GamePhases
                 if (!ship.Alive)
                 {
                     _gameplayHandler.DestroyShip(ship);
-                    _gameplayHandler.Referee.Popup.Clone(string.Format("{0} has hit an asteroid and was destroyed", ship.Name()), asteroidField.Location, 0.5f, 5);
+                    _gameplayHandler.Referee.Popup.Clone(string.Format("{0} has hit an asteroid and was destroyed", ship.Name()), asteroidField.Location, _gameplayHandler.Referee.RootTransform, 0.5f, 5);
                 }
                 else
                 {
-                    _gameplayHandler.Referee.Popup.Clone(string.Format("{0} has hit an asteroid and took {1} damage", ship.Name(), damage), asteroidField.Location, 0.5f, 5);                        
+                    _gameplayHandler.Referee.Popup.Clone(string.Format("{0} has hit an asteroid and took {1} damage", ship.Name(), damage), asteroidField.Location, _gameplayHandler.Referee.RootTransform, 0.5f, 5);                        
                 }
             }
         }

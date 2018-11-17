@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Logic.Display;
 using Logic.Gameplay.Players;
+using Logic.Gameplay.Rules;
 using Logic.Maths;
 using Logic.Utilities;
 using TMPro;
@@ -278,9 +279,9 @@ namespace Logic.Gameplay.Ships
                 .Any();
         }
 
-        public Ship Initialise(int training, Player player = null, string uuid = null)
+        public Ship Initialise(int training, Referee referee, Player player = null, string uuid = null)
         {
-            var newShip = Instantiate(this);
+            var newShip = Instantiate(this, referee.RootTransform);
             newShip.name = name;
             newShip.gameObject.active = false;
             newShip.Training = training;

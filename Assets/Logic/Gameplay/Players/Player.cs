@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Logic.Gameplay.Rules;
 using Logic.Gameplay.Ships;
 using Logic.Utilities;
 using UnityEngine;
@@ -32,14 +33,14 @@ namespace Logic.Gameplay.Players
             return StringSerializationAPI.Serialize<FleetJson>(new FleetJson(Faction, Fleet.Select(ship => ship.ToSerializable()).ToArray()));
         }
 
-        public void UpdateFleet(FleetJson fleet, Ship[] ships)
+        public void UpdateFleet(FleetJson fleet, Ship[] ships, Referee referee)
         {
             Faction = fleet.Faction;
             Fleet = fleet.Ships.Select(shipRep =>
             {
                 foreach (var ship in ships)
                 {
-                    if (ship.UUID == shipRep.Uuid) return ship.Initialise(shipRep.Training, this, shipRep.ShipUuid);
+                    if (ship.UUID == shipRep.Uuid) return ship.Initialise(shipRep.Training, referee, this, shipRep.ShipUuid);
                 }
 
                 throw new ArgumentException();

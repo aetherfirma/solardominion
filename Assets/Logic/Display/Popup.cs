@@ -34,19 +34,19 @@ namespace Logic.Display
             Destroy(gameObject);
         }
 
-        public Popup Clone(string message, Vector3 position, float rate, float lifespan)
+        public Popup Clone(string message, Vector3 position, Transform parent, float rate, float lifespan)
         {
-            var clone = Clone(message, position);
+            var clone = Clone(message, position, parent);
             clone.Rising = true;
             clone.RisingRate = rate;
             clone.Lifespan = lifespan;
             return clone;
         }
 
-        public Popup Clone(string message, Vector3 position)
+        public Popup Clone(string message, Vector3 position, Transform parent)
         {
-            var clone = Instantiate(this);
-            clone.transform.position = position;
+            var clone = Instantiate(this, parent);
+            clone.transform.localPosition = position;
             clone.Text = message;
             return clone;
         }

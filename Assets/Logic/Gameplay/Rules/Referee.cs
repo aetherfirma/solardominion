@@ -42,8 +42,7 @@ namespace Logic.Gameplay.Rules
 
         public Plane PlaySurface;
 
-        public Button LowerButton;
-        public RectTransform SelectionPanel;
+        public Transform RootTransform;
         public RectTransform FlashedMessageElement;
         public RectTransform StartScreen;
         public RectTransform LoginScreen;
@@ -193,7 +192,7 @@ namespace Logic.Gameplay.Rules
                 players[i] = new Player(uuid, uuid == PlayerUuid ? PlayerType.Local : PlayerType.Network);
                 if (CurrentGameState.rosters.ContainsKey(uuid))
                     players[i].UpdateFleet(CurrentGameState.rosters[uuid],
-                        Ships[(int) CurrentGameState.rosters[uuid].Faction].Ships);
+                        Ships[(int) CurrentGameState.rosters[uuid].Faction].Ships, this);
                 if (uuid == PlayerUuid) LocalPlayer = i;
                 players[i].Number = i;
             }
@@ -332,6 +331,7 @@ namespace Logic.Gameplay.Rules
                 var asteroidField = PlaceAsteroidField();
                 AsteroidFields[i+largeAsteroidFields] = new AsteroidField(asteroidField, 8);
                 var ring = new GameObject("Small Asteroid Field");
+                ring.transform.parent = RootTransform;
                 ring.transform.position = asteroidField;
                 var arc = ArcRenderer.NewArc(ring.transform, 8, 0.25f, 0, Mathf.PI * 2, 32, Color.white);
                 arc.transform.position = arc.transform.position + new Vector3(0, -5, 0);

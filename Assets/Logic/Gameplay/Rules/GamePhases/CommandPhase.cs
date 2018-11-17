@@ -35,7 +35,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                         if (turn.player != _gameplayHandler.Referee.PlayerUuid && turn.action == TurnType.CommandPhase)
                         {
                             var ship = _gameplayHandler.CurrentPlayer.Fleet.Single(s => s.ShipUuid == turn.ship);
-                            _gameplayHandler.Referee.Popup.Clone(string.Format("Orders received for {0}", ship.Name()), ship.transform.position, 0.5f, 5);
+                            _gameplayHandler.Referee.Popup.Clone(string.Format("Orders received for {0}", ship.Name()), Vector3.zero, ship.transform, 0.5f, 5);
 
                             if (turn.order != null)
                             {
@@ -110,7 +110,7 @@ namespace Logic.Gameplay.Rules.GamePhases
             {
                 foreach (var ship in _gameplayHandler.ShipsInInitiativeStep[_gameplayHandler.CurrentPlayer])
                 {
-                    _popups.Add(_gameplayHandler.Referee.Popup.Clone("Needs commands", ship.transform.position));
+                    _popups.Add(_gameplayHandler.Referee.Popup.Clone("Needs commands", Vector3.zero, ship.transform));
                 }
             }
         }

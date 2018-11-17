@@ -55,7 +55,8 @@ namespace Logic.Gameplay.Rules
         public void DestroyShip(Ship ship)
         {
             if (ship.Initiative == _currentInitiativeStep) RemoveShipFromCurrentStep(ship);
-            Object.Instantiate(Referee.ShipDestroyedExplosion, ship.transform.position, Quaternion.identity);
+            var explosion = Object.Instantiate(Referee.ShipDestroyedExplosion, Referee.RootTransform);
+            explosion.transform.position = ship.transform.position;
             ship.gameObject.SetActive(false);
 
             int exlosionRangeDice;
@@ -97,11 +98,11 @@ namespace Logic.Gameplay.Rules
                         if (!candidateShip.Alive)
                         {
                             shipsToExplode.Add(candidateShip);
-                            Referee.Popup.Clone(string.Format("{0} was destroyed in the explosion", candidateShip.Name()), candidateShip.Position, 0.5f, 5);
+                            Referee.Popup.Clone(string.Format("{0} was destroyed in the explosion", candidateShip.Name()), candidateShip.Position, Referee.RootTransform, 0.5f, 5);
                         }
                         else
                         {
-                            Referee.Popup.Clone(string.Format("{0} took {1} damage in the explosion", candidateShip.Name(), damage), candidateShip.Position, 0.5f, 5);                        
+                            Referee.Popup.Clone(string.Format("{0} took {1} damage in the explosion", candidateShip.Name(), damage), candidateShip.Position, Referee.RootTransform, 0.5f, 5);                        
                         }
                     }
                 }
@@ -457,7 +458,7 @@ namespace Logic.Gameplay.Rules
                     {
                         ship.SetInitiative(Referee.Rng);
                         _initiativePopups.Add(Referee.Popup.Clone(string.Format("Initiative {0}", ship.Initiative),
-                            ship.transform.position + Vector3.up, 0.5f, 5));
+                            Vector3.up, ship.transform, 0.5f, 5));
                     }
                 }
 

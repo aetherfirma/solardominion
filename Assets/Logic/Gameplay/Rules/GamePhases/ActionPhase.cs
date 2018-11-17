@@ -61,7 +61,7 @@ namespace Logic.Gameplay.Rules.GamePhases
             {
                 foreach (var ship in _gameplayHandler.ShipsInInitiativeStep[_gameplayHandler.CurrentPlayer])
                 {
-                    _popups.Add(_gameplayHandler.Referee.Popup.Clone("Ready to act", ship.transform.position));
+                    _popups.Add(_gameplayHandler.Referee.Popup.Clone("Ready to act", ship.transform.position, _gameplayHandler.Referee.RootTransform));
                 }
             }
         }
@@ -122,13 +122,14 @@ namespace Logic.Gameplay.Rules.GamePhases
 
         private void SetupRangeMarker(ShipSystem system)
         {
-            _rangeMarker = Object.Instantiate(_gameplayHandler.Referee.RangeRings,
-                new Vector3(0, -3, 0), Quaternion.identity);
+            var position = new Vector3(0, -3, 0);
+            _rangeMarker = Object.Instantiate(_gameplayHandler.Referee.RangeRings, _gameplayHandler.Referee.RootTransform);
+            _rangeMarker.transform.position = position;
             _rangeMarker.GetComponent<RangeMarkers>().Setup(
                 system.ShortRange,
                 system.MediumRange,
                 system.LongRange,
-                _gameplayHandler.SelectedShip.transform.position - new Vector3(0, -3, 0),
+                _gameplayHandler.SelectedShip.transform.position - position,
                 _gameplayHandler.Referee
             );
         }
@@ -358,7 +359,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                     attackerSuccesses == 1 ? "" : "es",
                     locked ? ", rerolling failures," : (unprepared ? ", rerolling successes,": "")
                 ),
-                firingShip.Position, 0.5f, 5
+                Vector3.zero, firingShip.transform, 0.5f, 5
             );
             
             var defenderResults = refereeRng.D6(defenderPool);
@@ -381,12 +382,12 @@ namespace Logic.Gameplay.Rules.GamePhases
                             totalDamage,
                             bracing ? ", rerolling failures," : ""
                         ),
-                        targetShip.Position, 0.5f, 5
+                        Vector3.zero, targetShip.transform, 0.5f, 5
                     );
                     for (var i = 0; i < totalDamage; i++)
                     {
-                        Object.Instantiate(_gameplayHandler.Referee.ShipHitExplosion, targetShip.transform.position + Random.onUnitSphere,
-                            Quaternion.identity);
+                        var explosion = Object.Instantiate(_gameplayHandler.Referee.ShipHitExplosion, _gameplayHandler.Referee.RootTransform);
+                        explosion.transform.position = targetShip.transform.position + Random.onUnitSphere;
                     }
                 }
                 else
@@ -400,7 +401,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                             defenderSuccesses == 1 ? "" : "es",
                             bracing ? ", rerolling failures," : ""
                         ),
-                        targetShip.Position, 0.5f, 5
+                        Vector3.zero, targetShip.transform, 0.5f, 5
                     );
                    _gameplayHandler.DestroyShip(targetShip);
                 }
@@ -416,7 +417,7 @@ namespace Logic.Gameplay.Rules.GamePhases
                         defenderSuccesses == 1 ? "" : "es",
                         bracing ? ", rerolling failures," : ""
                     ),
-                    targetShip.Position, 0.5f, 5
+                    Vector3.zero, targetShip.transform, 0.5f, 5
                 );
             }
         }

@@ -377,6 +377,34 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &1748046830
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1748046831}
+  m_Layer: 0
+  m_Name: Thing Parent
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1748046831
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1748046830}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1877841554
 GameObject:
   m_ObjectHideFlags: 0
@@ -631,6 +659,7 @@ MonoBehaviour:
   Popup: {fileID: 114413447236850522, guid: 327cad5049917e34b9b5d0ed50be4824, type: 2}
   Username: 
   Password: 
+  ThingParent: {fileID: 1748046831}
   LowerButton: {fileID: 114081545369597916, guid: db65a7400de68ed41af2b2950c965ec6,
     type: 2}
   SelectionPanel: {fileID: 224349124420606780, guid: 0c645ca6c8705584a91d67870ef995c0,

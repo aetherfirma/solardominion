@@ -125,8 +125,7 @@ namespace Logic.Gameplay.Rules
 
                                 var oldLength = _referee.Players[_referee.LocalPlayer].Fleet.Length;
                                 Array.Resize(ref _referee.Players[_referee.LocalPlayer].Fleet, oldLength + 1);
-                                var newShip = ship.Initialise(unmodifiedTraining,
-                                    _referee.Players[_referee.LocalPlayer]);
+                                var newShip = ship.Initialise(unmodifiedTraining, _referee, _referee.Players[_referee.LocalPlayer]);
                                 _referee.Players[_referee.LocalPlayer].Fleet[oldLength] = newShip;
 
                                 RecalculateFleetListing();
